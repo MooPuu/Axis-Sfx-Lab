@@ -55,18 +55,18 @@ export const ParametricSynthRack: React.FC<ParametricSynthRackProps> = ({
   ];
 
   return (
-    <div className="flex flex-col bg-neutral-900/90 rounded-2xl border border-neutral-800 p-5 shadow-xl backdrop-blur-md space-y-5">
+    <div className="flex flex-col bg-neutral-900/90 rounded-2xl border border-neutral-800 p-3.5 sm:p-5 shadow-xl backdrop-blur-md space-y-4 min-w-0 w-full">
       {/* Category Navigation & Select Header */}
-      <div>
-        <div className="flex items-center justify-between mb-3">
-          <div className="flex items-center space-x-2 text-xs font-semibold text-neutral-300">
+      <div className="min-w-0 space-y-2.5">
+        <div className="flex flex-wrap items-center justify-between gap-2 min-w-0">
+          <div className="flex items-center space-x-2 text-xs font-semibold text-neutral-300 shrink-0">
             <IconSliders size={18} className="text-blue-400" />
             <span>Procedural Sound Generator</span>
           </div>
 
-          <div className="flex items-center space-x-2">
-            {/* shadcn/ui Select for Category */}
-            <div className="w-36">
+          <div className="flex items-center space-x-2 shrink-0">
+            {/* Category Select */}
+            <div className="w-32 sm:w-36">
               <Select
                 value={params.category}
                 onValueChange={(val) => updateField("category", val)}
@@ -87,7 +87,7 @@ export const ParametricSynthRack: React.FC<ParametricSynthRackProps> = ({
             <button
               onClick={onMutate}
               title="Slightly mutate current sound (5% seed drift)"
-              className="flex items-center space-x-1 px-2.5 py-1 rounded-lg text-[11px] font-medium bg-amber-500/10 text-amber-300 hover:bg-amber-500/20 border border-amber-500/30 transition-all cursor-pointer"
+              className="flex items-center space-x-1 px-2 py-1 rounded-lg text-[11px] font-medium bg-amber-500/10 text-amber-300 hover:bg-amber-500/20 border border-amber-500/30 transition-all cursor-pointer shrink-0"
             >
               <IconSparkles size={13} />
               <span>Mutate</span>
@@ -95,15 +95,15 @@ export const ParametricSynthRack: React.FC<ParametricSynthRackProps> = ({
             <button
               onClick={onRandomize}
               title="Completely randomize parameters for instant inspiration"
-              className="flex items-center space-x-1 px-2.5 py-1 rounded-lg text-[11px] font-medium bg-purple-500/10 text-purple-300 hover:bg-purple-500/20 border border-purple-500/30 transition-all cursor-pointer"
+              className="flex items-center space-x-1 px-2 py-1 rounded-lg text-[11px] font-medium bg-purple-500/10 text-purple-300 hover:bg-purple-500/20 border border-purple-500/30 transition-all cursor-pointer shrink-0"
             >
-              <span>Randomize</span>
+              <span>Random</span>
             </button>
           </div>
         </div>
 
         {/* Category Selector Tabs */}
-        <div className="grid grid-cols-4 sm:grid-cols-7 gap-1.5 p-1 rounded-xl bg-neutral-950/80 border border-neutral-800/80">
+        <div className="grid grid-cols-3 sm:grid-cols-4 lg:grid-cols-7 gap-1.5 p-1 rounded-xl bg-neutral-950/80 border border-neutral-800/80 min-w-0">
           {categories.map((c) => {
             const Icon = c.icon;
             const active = params.category === c.id;
@@ -111,7 +111,7 @@ export const ParametricSynthRack: React.FC<ParametricSynthRackProps> = ({
               <button
                 key={c.id}
                 onClick={() => updateField("category", c.id)}
-                className={`flex flex-col items-center justify-center py-2 px-1 rounded-lg transition-all cursor-pointer ${
+                className={`flex flex-col items-center justify-center py-1.5 sm:py-2 px-1 rounded-lg transition-all cursor-pointer min-w-0 ${
                   active
                     ? "bg-neutral-800 text-white shadow-md border border-neutral-700"
                     : "text-neutral-400 hover:text-neutral-200 hover:bg-neutral-900/60"
@@ -126,9 +126,9 @@ export const ParametricSynthRack: React.FC<ParametricSynthRackProps> = ({
       </div>
 
       {/* Main Parameters Grid */}
-      <div className="grid grid-cols-1 md:grid-cols-2 gap-4 text-xs">
+      <div className="grid grid-cols-1 md:grid-cols-2 gap-3.5 sm:gap-4 text-xs min-w-0">
         {/* Left Column: Physical & Frequency Engine */}
-        <div className="space-y-3.5 p-3.5 rounded-xl bg-neutral-950/50 border border-neutral-800/70">
+        <div className="space-y-3 p-3 sm:p-3.5 rounded-xl bg-neutral-950/50 border border-neutral-800/70 min-w-0">
           <h4 className="text-[11px] font-semibold uppercase tracking-wider text-neutral-400">
             Acoustics & Envelope
           </h4>
@@ -136,8 +136,8 @@ export const ParametricSynthRack: React.FC<ParametricSynthRackProps> = ({
           {/* Base Frequency */}
           <div className="space-y-1">
             <div className="flex justify-between text-neutral-300">
-              <span>Base Frequency</span>
-              <span className="font-mono text-cyan-300">{params.base_freq.toFixed(0)} Hz</span>
+              <span className="truncate">Base Frequency</span>
+              <span className="font-mono text-cyan-300 shrink-0">{params.base_freq.toFixed(0)} Hz</span>
             </div>
             <input
               type="range"
@@ -153,8 +153,8 @@ export const ParametricSynthRack: React.FC<ParametricSynthRackProps> = ({
           {/* Envelope Decay */}
           <div className="space-y-1">
             <div className="flex justify-between text-neutral-300">
-              <span>Decay Time</span>
-              <span className="font-mono text-cyan-300">{params.decay_ms.toFixed(0)} ms</span>
+              <span className="truncate">Decay Time</span>
+              <span className="font-mono text-cyan-300 shrink-0">{params.decay_ms.toFixed(0)} ms</span>
             </div>
             <input
               type="range"
@@ -170,8 +170,8 @@ export const ParametricSynthRack: React.FC<ParametricSynthRackProps> = ({
           {/* Pitch Decay / Sweep */}
           <div className="space-y-1">
             <div className="flex justify-between text-neutral-300">
-              <span>Pitch Envelope Bend</span>
-              <span className="font-mono text-cyan-300">{(params.pitch_decay * 100).toFixed(0)}%</span>
+              <span className="truncate">Pitch Envelope Bend</span>
+              <span className="font-mono text-cyan-300 shrink-0">{(params.pitch_decay * 100).toFixed(0)}%</span>
             </div>
             <input
               type="range"
@@ -186,13 +186,13 @@ export const ParametricSynthRack: React.FC<ParametricSynthRackProps> = ({
 
           {/* Material Presets (with shadcn/ui Select) */}
           {(params.category === "impact" || params.category === "footstep") && (
-            <div className="space-y-1.5 pt-1">
+            <div className="space-y-1 pt-1 min-w-0">
               <span className="text-neutral-400 text-[11px]">Material Density & Texture</span>
               <Select
                 value={params.material_preset}
                 onValueChange={(val) => updateField("material_preset", val)}
               >
-                <SelectTrigger className="h-8 text-xs bg-neutral-950 border-neutral-800 text-rose-300">
+                <SelectTrigger className="h-8 text-xs bg-neutral-950 border-neutral-800 text-rose-300 w-full">
                   <SelectValue placeholder="Select Material" />
                 </SelectTrigger>
                 <SelectContent>
@@ -211,8 +211,8 @@ export const ParametricSynthRack: React.FC<ParametricSynthRackProps> = ({
             <>
               <div className="space-y-1">
                 <div className="flex justify-between text-neutral-300">
-                  <span>Harmonic Count</span>
-                  <span className="font-mono text-amber-300">{params.harmonic_count}</span>
+                  <span className="truncate">Harmonic Count</span>
+                  <span className="font-mono text-amber-300 shrink-0">{params.harmonic_count}</span>
                 </div>
                 <input
                   type="range"
@@ -226,8 +226,8 @@ export const ParametricSynthRack: React.FC<ParametricSynthRackProps> = ({
               </div>
               <div className="space-y-1">
                 <div className="flex justify-between text-neutral-300">
-                  <span>RPM Jitter / Flutter</span>
-                  <span className="font-mono text-amber-300">{(params.jitter_amount * 100).toFixed(0)}%</span>
+                  <span className="truncate">RPM Jitter / Flutter</span>
+                  <span className="font-mono text-amber-300 shrink-0">{(params.jitter_amount * 100).toFixed(0)}%</span>
                 </div>
                 <input
                   type="range"
@@ -246,8 +246,8 @@ export const ParametricSynthRack: React.FC<ParametricSynthRackProps> = ({
             <>
               <div className="space-y-1">
                 <div className="flex justify-between text-neutral-300">
-                  <span>FM Modulation Depth</span>
-                  <span className="font-mono text-fuchsia-300">{(params.fm_depth * 100).toFixed(0)}%</span>
+                  <span className="truncate">FM Modulation Depth</span>
+                  <span className="font-mono text-fuchsia-300 shrink-0">{(params.fm_depth * 100).toFixed(0)}%</span>
                 </div>
                 <input
                   type="range"
@@ -261,8 +261,8 @@ export const ParametricSynthRack: React.FC<ParametricSynthRackProps> = ({
               </div>
               <div className="space-y-1">
                 <div className="flex justify-between text-neutral-300">
-                  <span>FM Ratio</span>
-                  <span className="font-mono text-fuchsia-300">{params.fm_ratio.toFixed(1)}x</span>
+                  <span className="truncate">FM Ratio</span>
+                  <span className="font-mono text-fuchsia-300 shrink-0">{params.fm_ratio.toFixed(1)}x</span>
                 </div>
                 <input
                   type="range"
@@ -277,11 +277,11 @@ export const ParametricSynthRack: React.FC<ParametricSynthRackProps> = ({
             </>
           )}
 
-          {/* Damping & Brightness */}
+          {/* Damping */}
           <div className="space-y-1">
             <div className="flex justify-between text-neutral-300">
-              <span>Damping Decay</span>
-              <span className="font-mono text-cyan-300">{params.damping.toFixed(2)}</span>
+              <span className="truncate">Damping Decay</span>
+              <span className="font-mono text-cyan-300 shrink-0">{params.damping.toFixed(2)}</span>
             </div>
             <input
               type="range"
@@ -296,7 +296,7 @@ export const ParametricSynthRack: React.FC<ParametricSynthRackProps> = ({
         </div>
 
         {/* Right Column: Texture & DSP Effects */}
-        <div className="space-y-3.5 p-3.5 rounded-xl bg-neutral-950/50 border border-neutral-800/70">
+        <div className="space-y-3 p-3 sm:p-3.5 rounded-xl bg-neutral-950/50 border border-neutral-800/70 min-w-0">
           <h4 className="text-[11px] font-semibold uppercase tracking-wider text-neutral-400">
             Tone Shaping & Effects
           </h4>
@@ -304,8 +304,8 @@ export const ParametricSynthRack: React.FC<ParametricSynthRackProps> = ({
           {/* Filter Cutoff */}
           <div className="space-y-1">
             <div className="flex justify-between text-neutral-300">
-              <span>Low-Pass Filter Cutoff</span>
-              <span className="font-mono text-indigo-300">{params.filter_cutoff.toFixed(0)} Hz</span>
+              <span className="truncate">Low-Pass Filter</span>
+              <span className="font-mono text-indigo-300 shrink-0">{params.filter_cutoff.toFixed(0)} Hz</span>
             </div>
             <input
               type="range"
@@ -321,8 +321,8 @@ export const ParametricSynthRack: React.FC<ParametricSynthRackProps> = ({
           {/* Filter Resonance */}
           <div className="space-y-1">
             <div className="flex justify-between text-neutral-300">
-              <span>Filter Resonance (Q)</span>
-              <span className="font-mono text-indigo-300">{params.filter_resonance.toFixed(1)}</span>
+              <span className="truncate">Filter Resonance (Q)</span>
+              <span className="font-mono text-indigo-300 shrink-0">{params.filter_resonance.toFixed(1)}</span>
             </div>
             <input
               type="range"
@@ -338,8 +338,8 @@ export const ParametricSynthRack: React.FC<ParametricSynthRackProps> = ({
           {/* Noise Mix */}
           <div className="space-y-1">
             <div className="flex justify-between text-neutral-300">
-              <span>Noise & Attack Strike</span>
-              <span className="font-mono text-indigo-300">{(params.noise_mix * 100).toFixed(0)}%</span>
+              <span className="truncate">Noise & Attack Strike</span>
+              <span className="font-mono text-indigo-300 shrink-0">{(params.noise_mix * 100).toFixed(0)}%</span>
             </div>
             <input
               type="range"
@@ -355,8 +355,8 @@ export const ParametricSynthRack: React.FC<ParametricSynthRackProps> = ({
           {/* Drive / Saturation */}
           <div className="space-y-1">
             <div className="flex justify-between text-neutral-300">
-              <span>Overdrive / Saturation</span>
-              <span className="font-mono text-indigo-300">{(params.drive * 100).toFixed(0)}%</span>
+              <span className="truncate">Overdrive / Saturation</span>
+              <span className="font-mono text-indigo-300 shrink-0">{(params.drive * 100).toFixed(0)}%</span>
             </div>
             <input
               type="range"
@@ -372,8 +372,8 @@ export const ParametricSynthRack: React.FC<ParametricSynthRackProps> = ({
           {/* Algorithmic Reverb Wet */}
           <div className="space-y-1">
             <div className="flex justify-between text-neutral-300">
-              <span>Reverb Room Wet</span>
-              <span className="font-mono text-indigo-300">{(params.reverb_wet * 100).toFixed(0)}%</span>
+              <span className="truncate">Reverb Room Wet</span>
+              <span className="font-mono text-indigo-300 shrink-0">{(params.reverb_wet * 100).toFixed(0)}%</span>
             </div>
             <input
               type="range"
@@ -389,8 +389,8 @@ export const ParametricSynthRack: React.FC<ParametricSynthRackProps> = ({
           {/* Stereo Spread */}
           <div className="space-y-1">
             <div className="flex justify-between text-neutral-300">
-              <span>Stereo Width</span>
-              <span className="font-mono text-indigo-300">{(params.stereo_spread * 100).toFixed(0)}%</span>
+              <span className="truncate">Stereo Width</span>
+              <span className="font-mono text-indigo-300 shrink-0">{(params.stereo_spread * 100).toFixed(0)}%</span>
             </div>
             <input
               type="range"

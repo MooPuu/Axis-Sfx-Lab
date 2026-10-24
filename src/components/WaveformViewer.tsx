@@ -35,22 +35,44 @@ export const WaveformViewer: React.FC<WaveformViewerProps> = ({
   const canvasRef = useRef<HTMLCanvasElement | null>(null);
   const containerRef = useRef<HTMLDivElement | null>(null);
   const [isDragging, setIsDragging] = useState<"start" | "end" | null>(null);
+  const [dimensions, setDimensions] = useState({ width: 0, height: 144 });
 
-  // Render canvas waveform
+  // Responsive dynamic resize observer so canvas scales perfectly with any window size
+  useEffect(() => {
+    const container = containerRef.current;
+    if (!container) return;
+
+    const observer = new ResizeObserver((entries) => {
+      for (const entry of entries) {
+        const { width, height } = entry.contentRect;
+        if (width > 0) {
+          setDimensions({ width, height: height || 144 });
+        }
+      }
+    });
+
+    observer.observe(container);
+    return () => observer.disconnect();
+  }, []);
+
+  // Render canvas waveform on dimensions or state change
   useEffect(() => {
     const canvas = canvasRef.current;
     if (!canvas) return;
     const ctx = canvas.getContext("2d");
     if (!ctx) return;
 
-    const dpr = window.devicePixelRatio || 1;
     const rect = canvas.getBoundingClientRect();
-    canvas.width = rect.width * dpr;
-    canvas.height = rect.height * dpr;
-    ctx.scale(dpr, dpr);
-
+    const dpr = window.devicePixelRatio || 1;
     const width = rect.width;
     const height = rect.height;
+
+    if (width <= 0 || height <= 0) return;
+
+    canvas.width = width * dpr;
+    canvas.height = height * dpr;
+    ctx.scale(dpr, dpr);
+
     const centerY = height / 2;
 
     ctx.clearRect(0, 0, width, height);
@@ -148,9 +170,9 @@ export const WaveformViewer: React.FC<WaveformViewerProps> = ({
       ctx.moveTo(playheadX, 0);
       ctx.lineTo(playheadX, height);
       ctx.stroke();
-      ctx.shadowBlur = 0; // reset
+      ctx.shadowBlur = 0;
     }
-  }, [peaks, loopSettings, playbackProgress, isPlaying]);
+  }, [peaks, loopSettings, playbackProgress, isPlaying, dimensions]);
 
   // Handle Dragging Loop Boundaries
   const handleMouseDown = (e: React.MouseEvent<HTMLCanvasElement>) => {
@@ -205,34 +227,34 @@ export const WaveformViewer: React.FC<WaveformViewerProps> = ({
   const totalSeconds = (durationMs / 1000).toFixed(2);
 
   return (
-    <div className="flex flex-col rounded-2xl bg-neutral-900/90 border border-neutral-800 p-4 shadow-xl backdrop-blur-md">
+    <div className="flex flex-col rounded-2xl bg-neutral-900/90 border border-neutral-800 p-3.5 sm:p-4 shadow-xl backdrop-blur-md min-w-0 w-full">
       {/* Top Status & Controls */}
-      <div className="flex items-center justify-between pb-3 border-b border-neutral-800/80 mb-3">
-        <div className="flex items-center space-x-3">
+      <div className="flex flex-wrap items-center justify-between gap-2.5 pb-3 border-b border-neutral-800/80 mb-3 min-w-0">
+        <div className="flex flex-wrap items-center gap-2 sm:gap-2.5 min-w-0">
           {/* Play/Pause Button */}
           <button
             onClick={onTogglePlay}
-            className={`flex items-center space-x-2 px-4 py-2 rounded-xl font-medium text-xs transition-all duration-200 cursor-pointer ${
+            className={`flex items-center space-x-1.5 px-3 sm:px-4 py-1.5 sm:py-2 rounded-xl font-medium text-xs transition-all duration-200 cursor-pointer shrink-0 ${
               isPlaying && !isSeamPlaying
                 ? "bg-emerald-500/20 text-emerald-300 border border-emerald-500/40 shadow-lg shadow-emerald-500/10"
                 : "bg-neutral-800 hover:bg-neutral-700/80 text-neutral-200 border border-neutral-700"
             }`}
           >
-            {isPlaying && !isSeamPlaying ? <IconPause size={16} /> : <IconPlay size={16} />}
+            {isPlaying && !isSeamPlaying ? <IconPause size={15} /> : <IconPlay size={15} />}
             <span>{isPlaying && !isSeamPlaying ? "Pause" : "Play Sound"}</span>
           </button>
 
           {/* Loop Play Toggle */}
           <button
             onClick={onToggleLoop}
-            className={`flex items-center space-x-1.5 px-3 py-2 rounded-xl text-xs font-medium transition-all duration-200 cursor-pointer ${
+            className={`flex items-center space-x-1.5 px-2.5 sm:px-3 py-1.5 sm:py-2 rounded-xl text-xs font-medium transition-all duration-200 cursor-pointer shrink-0 ${
               loopSettings.enabled
                 ? "bg-cyan-500/20 text-cyan-300 border border-cyan-500/40"
                 : "bg-neutral-800/60 text-neutral-400 hover:text-neutral-200 border border-neutral-800"
             }`}
           >
-            <IconLoop size={16} className={loopSettings.enabled ? "text-cyan-400" : "text-neutral-500"} />
-            <span>Seamless Loop {loopSettings.enabled ? "ON" : "OFF"}</span>
+            <IconLoop size={15} className={loopSettings.enabled ? "text-cyan-400" : "text-neutral-500"} />
+            <span>Loop {loopSettings.enabled ? "ON" : "OFF"}</span>
           </button>
 
           {/* Audition Seam Button */}
@@ -240,29 +262,29 @@ export const WaveformViewer: React.FC<WaveformViewerProps> = ({
             <button
               onClick={onAuditionSeam}
               title="Repeats only the transition junction (last 1s into first 1s) to instantly verify click-free seam"
-              className={`flex items-center space-x-1.5 px-3 py-2 rounded-xl text-xs font-medium transition-all duration-200 cursor-pointer ${
+              className={`flex items-center space-x-1.5 px-2.5 sm:px-3 py-1.5 sm:py-2 rounded-xl text-xs font-medium transition-all duration-200 cursor-pointer shrink-0 ${
                 isSeamPlaying
                   ? "bg-violet-500/30 text-violet-200 border border-violet-400/50 animate-pulse shadow-md shadow-violet-500/20"
                   : "bg-violet-950/40 text-violet-300 hover:bg-violet-900/50 border border-violet-800/60"
               }`}
             >
-              <IconSeamAudition size={16} />
+              <IconSeamAudition size={15} />
               <span>Audition Seam</span>
             </button>
           )}
         </div>
 
         {/* Duration & Metadata Badges */}
-        <div className="flex items-center space-x-3 text-xs text-neutral-400 font-mono">
-          <span className="px-2.5 py-1 rounded-md bg-neutral-950 border border-neutral-800 text-neutral-300">
+        <div className="flex items-center space-x-2 text-[11px] text-neutral-400 font-mono shrink-0">
+          <span className="px-2 py-0.5 rounded-md bg-neutral-950 border border-neutral-800 text-neutral-300">
             {formatTime(durationMs)}
           </span>
-          <span className="px-2 py-1 rounded-md bg-neutral-950/70 border border-neutral-800/60 text-neutral-400">
+          <span className="hidden sm:inline px-2 py-0.5 rounded-md bg-neutral-950/70 border border-neutral-800/60 text-neutral-400">
             {sampleRate} Hz
           </span>
           {loopSettings.enabled && (
-            <span className="px-2 py-1 rounded-md bg-cyan-950/40 border border-cyan-800/40 text-cyan-400">
-              RIFF smpl injected
+            <span className="px-2 py-0.5 rounded-md bg-cyan-950/40 border border-cyan-800/40 text-cyan-400 truncate">
+              RIFF smpl
             </span>
           )}
         </div>
@@ -271,7 +293,7 @@ export const WaveformViewer: React.FC<WaveformViewerProps> = ({
       {/* Canvas Waveform View */}
       <div
         ref={containerRef}
-        className="relative w-full h-36 bg-neutral-950/80 rounded-xl border border-neutral-800/90 overflow-hidden select-none cursor-crosshair group"
+        className="relative w-full h-32 sm:h-36 md:h-40 bg-neutral-950/80 rounded-xl border border-neutral-800/90 overflow-hidden select-none cursor-crosshair group min-w-0"
       >
         <canvas
           ref={canvasRef}
@@ -291,7 +313,7 @@ export const WaveformViewer: React.FC<WaveformViewerProps> = ({
       </div>
 
       {/* shadcn/ui Playback Scrubbing Slider */}
-      <div className="pt-3 pb-1 space-y-1.5">
+      <div className="pt-2.5 pb-1 space-y-1 min-w-0">
         <div className="flex items-center justify-between text-[11px] font-mono text-neutral-400">
           <span className="text-cyan-400">{currentSeconds}s</span>
           <span className="text-[10px] text-neutral-500 uppercase tracking-wider">Playback Position</span>
@@ -312,17 +334,17 @@ export const WaveformViewer: React.FC<WaveformViewerProps> = ({
 
       {/* Waveform Footer with Loop Indicators */}
       {loopSettings.enabled && (
-        <div className="flex items-center justify-between pt-2 px-1 text-[11px] font-mono text-neutral-500">
-          <div className="flex items-center space-x-1.5">
-            <span className="w-2 h-2 rounded-full bg-cyan-400 inline-block" />
-            <span>Loop Start: {(loopSettings.loop_start_ratio * durationMs).toFixed(0)}ms</span>
+        <div className="flex flex-wrap items-center justify-between pt-1.5 px-0.5 text-[10px] sm:text-[11px] font-mono text-neutral-500 gap-1 min-w-0">
+          <div className="flex items-center space-x-1.5 shrink-0">
+            <span className="w-1.5 h-1.5 rounded-full bg-cyan-400 inline-block" />
+            <span>Start: {(loopSettings.loop_start_ratio * durationMs).toFixed(0)}ms</span>
           </div>
-          <div className="flex items-center space-x-2 text-neutral-400">
+          <div className="flex items-center space-x-1 text-neutral-400 shrink-0">
             <span>Window: {((loopSettings.loop_end_ratio - loopSettings.loop_start_ratio) * durationMs).toFixed(0)}ms</span>
           </div>
-          <div className="flex items-center space-x-1.5">
-            <span className="w-2 h-2 rounded-full bg-purple-400 inline-block" />
-            <span>Loop End: {(loopSettings.loop_end_ratio * durationMs).toFixed(0)}ms</span>
+          <div className="flex items-center space-x-1.5 shrink-0">
+            <span className="w-1.5 h-1.5 rounded-full bg-purple-400 inline-block" />
+            <span>End: {(loopSettings.loop_end_ratio * durationMs).toFixed(0)}ms</span>
           </div>
         </div>
       )}

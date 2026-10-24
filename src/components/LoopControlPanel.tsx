@@ -40,7 +40,7 @@ export const LoopControlPanel: React.FC<LoopControlPanelProps> = ({
   ];
 
   return (
-    <div className="flex flex-col bg-neutral-900/90 rounded-2xl border border-neutral-800 p-5 shadow-xl backdrop-blur-md">
+    <div className="flex flex-col bg-neutral-900/90 rounded-2xl border border-neutral-800 p-3.5 sm:p-5 shadow-xl backdrop-blur-md min-w-0 w-full">
       {/* Header */}
       <div className="flex items-center justify-between pb-3 border-b border-neutral-800">
         <div className="flex items-center space-x-2.5">
