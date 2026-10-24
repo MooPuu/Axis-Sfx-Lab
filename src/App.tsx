@@ -368,7 +368,7 @@ export default function App() {
   });
 
   return (
-    <div className="min-h-screen flex flex-col font-sans select-none overflow-x-hidden">
+    <div className="min-h-screen flex flex-col font-sans select-none overflow-x-hidden bg-neutral-950 text-neutral-100">
       {/* Top Application Header with shadcn Menubar & Top-Right Uiverse Theme Switch */}
       <header className="h-14 px-4 bg-neutral-900/90 border-b border-neutral-800/80 backdrop-blur-md flex items-center justify-between sticky top-0 z-40">
         {/* Left: Branding & shadcn Menubar */}

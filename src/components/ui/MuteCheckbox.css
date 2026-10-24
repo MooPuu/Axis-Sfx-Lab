@@ -12,6 +12,7 @@
   padding: 4px;
   border-radius: 10px;
   transition: all 0.2s ease;
+  position: relative;
 }
 
 .mute-checkbox-label:hover {
@@ -21,33 +22,34 @@
 .mute-checkbox-input {
   position: absolute;
   opacity: 0;
-  cursor: pointer;
+  pointer-events: none;
   height: 0;
   width: 0;
+  margin: 0;
 }
 
 .mute-checkbox-container {
   position: relative;
-  width: 28px;
-  height: 28px;
+  width: 32px;
+  height: 32px;
   display: flex;
   align-items: center;
   justify-content: center;
   border-radius: 8px;
   background: rgba(255, 255, 255, 0.04);
-  border: 1px solid rgba(255, 255, 255, 0.08);
+  border: 1px solid rgba(255, 255, 255, 0.1);
   transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
   color: #38bdf8;
 }
 
 .mute-checkbox-label:hover .mute-checkbox-container {
-  border-color: rgba(56, 189, 248, 0.4);
-  box-shadow: 0 0 10px rgba(56, 189, 248, 0.15);
+  border-color: rgba(56, 189, 248, 0.5);
+  box-shadow: 0 0 12px rgba(56, 189, 248, 0.2);
 }
 
 .speaker-icon {
-  width: 18px;
-  height: 18px;
+  width: 20px;
+  height: 20px;
   transition: transform 0.2s ease;
 }
 
@@ -87,7 +89,7 @@
 .mute-checkbox-input:checked + .mute-checkbox-container {
   color: #94a3b8;
   background: rgba(244, 63, 94, 0.08);
-  border-color: rgba(244, 63, 94, 0.3);
+  border-color: rgba(244, 63, 94, 0.4);
 }
 
 .mute-checkbox-input:checked + .mute-checkbox-container .soundwave {

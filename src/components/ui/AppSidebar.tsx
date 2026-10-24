@@ -58,7 +58,7 @@ export const AppSidebar: React.FC<AppSidebarProps> = ({
 
   return (
     <aside
-      className={`relative flex flex-col border-r transition-all duration-300 z-30 select-none ${
+      className={`relative flex flex-col border-r transition-all duration-300 z-30 select-none shrink-0 ${
         theme === "dark"
           ? "bg-neutral-900/90 border-neutral-800 text-neutral-200"
           : "bg-slate-100/90 border-slate-300 text-slate-800"
