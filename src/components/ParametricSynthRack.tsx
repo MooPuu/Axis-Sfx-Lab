@@ -11,6 +11,13 @@ import {
   IconSliders,
   IconSparkles,
 } from "./icons/DuotoneIcons";
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from "./ui/select";
 
 interface ParametricSynthRackProps {
   params: SynthParams;
@@ -40,23 +47,43 @@ export const ParametricSynthRack: React.FC<ParametricSynthRackProps> = ({
   ];
 
   const materials = [
-    { id: "metal", name: "Metal" },
-    { id: "wood", name: "Wood" },
-    { id: "glass", name: "Glass" },
-    { id: "stone", name: "Stone" },
-    { id: "flesh", name: "Organic" },
+    { id: "metal", name: "Metal Resonance" },
+    { id: "wood", name: "Wood Acoustic" },
+    { id: "glass", name: "Glass Crystal" },
+    { id: "stone", name: "Stone & Mineral" },
+    { id: "flesh", name: "Organic & Flesh" },
   ];
 
   return (
     <div className="flex flex-col bg-neutral-900/90 rounded-2xl border border-neutral-800 p-5 shadow-xl backdrop-blur-md space-y-5">
-      {/* Category Navigation Pills */}
+      {/* Category Navigation & Select Header */}
       <div>
         <div className="flex items-center justify-between mb-3">
           <div className="flex items-center space-x-2 text-xs font-semibold text-neutral-300">
             <IconSliders size={18} className="text-blue-400" />
             <span>Procedural Sound Generator</span>
           </div>
-          <div className="flex items-center space-x-1.5">
+
+          <div className="flex items-center space-x-2">
+            {/* shadcn/ui Select for Category */}
+            <div className="w-36">
+              <Select
+                value={params.category}
+                onValueChange={(val) => updateField("category", val)}
+              >
+                <SelectTrigger className="h-7 text-xs bg-neutral-950 border-neutral-800">
+                  <SelectValue placeholder="Category" />
+                </SelectTrigger>
+                <SelectContent>
+                  {categories.map((c) => (
+                    <SelectItem key={c.id} value={c.id}>
+                      {c.name}
+                    </SelectItem>
+                  ))}
+                </SelectContent>
+              </Select>
+            </div>
+
             <button
               onClick={onMutate}
               title="Slightly mutate current sound (5% seed drift)"
@@ -157,25 +184,25 @@ export const ParametricSynthRack: React.FC<ParametricSynthRackProps> = ({
             />
           </div>
 
-          {/* Material Presets (for Impacts / Foley) */}
+          {/* Material Presets (with shadcn/ui Select) */}
           {(params.category === "impact" || params.category === "footstep") && (
             <div className="space-y-1.5 pt-1">
-              <span className="text-neutral-400 text-[11px]">Material Density</span>
-              <div className="grid grid-cols-5 gap-1">
-                {materials.map((m) => (
-                  <button
-                    key={m.id}
-                    onClick={() => updateField("material_preset", m.id)}
-                    className={`py-1 rounded text-[10px] font-medium transition-all ${
-                      params.material_preset === m.id
-                        ? "bg-rose-500/20 text-rose-300 border border-rose-500/40"
-                        : "bg-neutral-900 text-neutral-400 hover:text-neutral-200 border border-neutral-800"
-                    }`}
-                  >
-                    {m.name}
-                  </button>
-                ))}
-              </div>
+              <span className="text-neutral-400 text-[11px]">Material Density & Texture</span>
+              <Select
+                value={params.material_preset}
+                onValueChange={(val) => updateField("material_preset", val)}
+              >
+                <SelectTrigger className="h-8 text-xs bg-neutral-950 border-neutral-800 text-rose-300">
+                  <SelectValue placeholder="Select Material" />
+                </SelectTrigger>
+                <SelectContent>
+                  {materials.map((m) => (
+                    <SelectItem key={m.id} value={m.id}>
+                      {m.name}
+                    </SelectItem>
+                  ))}
+                </SelectContent>
+              </Select>
             </div>
           )}
 

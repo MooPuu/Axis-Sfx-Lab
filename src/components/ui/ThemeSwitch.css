@@ -1,0 +1,103 @@
+/* Uiverse.io Button by metanef (stupid-horse-86) */
+.theme-switch-wrapper {
+  display: inline-flex;
+  align-items: center;
+  user-select: none;
+}
+
+.theme-switch {
+  position: relative;
+  display: inline-block;
+  width: 54px;
+  height: 28px;
+  cursor: pointer;
+}
+
+.theme-switch-input {
+  opacity: 0;
+  width: 0;
+  height: 0;
+  position: absolute;
+}
+
+.theme-switch-slider {
+  position: absolute;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  background-color: #17171c;
+  border: 1px solid rgba(255, 255, 255, 0.1);
+  border-radius: 30px;
+  transition: all 0.35s cubic-bezier(0.4, 0, 0.2, 1);
+  box-shadow: inset 2px 2px 5px rgba(0, 0, 0, 0.5), inset -2px -2px 5px rgba(255, 255, 255, 0.05);
+}
+
+.theme-switch-slider:before {
+  position: absolute;
+  content: "";
+  height: 20px;
+  width: 20px;
+  left: 4px;
+  bottom: 3px;
+  background: linear-gradient(135deg, #38bdf8, #0284c7);
+  border-radius: 50%;
+  transition: all 0.35s cubic-bezier(0.4, 0, 0.2, 1);
+  box-shadow: 0 2px 6px rgba(0, 0, 0, 0.4), 0 0 10px rgba(56, 189, 248, 0.4);
+}
+
+.theme-switch-icon {
+  position: absolute;
+  top: 6px;
+  width: 14px;
+  height: 14px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  transition: opacity 0.3s ease, transform 0.35s cubic-bezier(0.4, 0, 0.2, 1);
+  pointer-events: none;
+}
+
+.theme-switch-icon.sun-icon {
+  right: 7px;
+  color: #f59e0b;
+  opacity: 0;
+  transform: rotate(-30deg) scale(0.7);
+}
+
+.theme-switch-icon.moon-icon {
+  left: 7px;
+  color: #ffffff;
+  opacity: 1;
+  transform: rotate(0) scale(1);
+  z-index: 2;
+}
+
+/* Checked (Light Mode) state */
+.theme-switch-input:checked + .theme-switch-slider {
+  background-color: #e2e8f0;
+  border-color: #cbd5e1;
+  box-shadow: inset 2px 2px 4px rgba(0, 0, 0, 0.15), inset -2px -2px 4px rgba(255, 255, 255, 0.8);
+}
+
+.theme-switch-input:checked + .theme-switch-slider:before {
+  transform: translateX(26px);
+  background: linear-gradient(135deg, #f59e0b, #d97706);
+  box-shadow: 0 2px 6px rgba(245, 158, 11, 0.4), 0 0 10px rgba(245, 158, 11, 0.5);
+}
+
+.theme-switch-input:checked + .theme-switch-slider .sun-icon {
+  opacity: 1;
+  transform: translateX(-26px) rotate(0) scale(1);
+  color: #ffffff;
+  z-index: 2;
+}
+
+.theme-switch-input:checked + .theme-switch-slider .moon-icon {
+  opacity: 0;
+  transform: translateX(26px) rotate(30deg) scale(0.7);
+}
+
+.theme-switch:hover .theme-switch-slider {
+  border-color: rgba(56, 189, 248, 0.4);
+}

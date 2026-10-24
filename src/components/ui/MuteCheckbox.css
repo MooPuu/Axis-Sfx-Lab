@@ -1,0 +1,104 @@
+/* Uiverse.io Checkbox by catraco (dry-robin-61) */
+.mute-checkbox-wrapper {
+  display: inline-flex;
+  align-items: center;
+  user-select: none;
+}
+
+.mute-checkbox-label {
+  display: flex;
+  align-items: center;
+  cursor: pointer;
+  padding: 4px;
+  border-radius: 10px;
+  transition: all 0.2s ease;
+}
+
+.mute-checkbox-label:hover {
+  background: rgba(255, 255, 255, 0.05);
+}
+
+.mute-checkbox-input {
+  position: absolute;
+  opacity: 0;
+  cursor: pointer;
+  height: 0;
+  width: 0;
+}
+
+.mute-checkbox-container {
+  position: relative;
+  width: 28px;
+  height: 28px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  border-radius: 8px;
+  background: rgba(255, 255, 255, 0.04);
+  border: 1px solid rgba(255, 255, 255, 0.08);
+  transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+  color: #38bdf8;
+}
+
+.mute-checkbox-label:hover .mute-checkbox-container {
+  border-color: rgba(56, 189, 248, 0.4);
+  box-shadow: 0 0 10px rgba(56, 189, 248, 0.15);
+}
+
+.speaker-icon {
+  width: 18px;
+  height: 18px;
+  transition: transform 0.2s ease;
+}
+
+/* Soundwaves animation */
+.soundwave {
+  transition: all 0.25s cubic-bezier(0.4, 0, 0.2, 1);
+  opacity: 1;
+  stroke: currentColor;
+}
+
+.wave-1 {
+  animation: pulse-wave 2s infinite ease-in-out;
+}
+
+.wave-2 {
+  animation: pulse-wave 2s infinite ease-in-out 0.2s;
+}
+
+@keyframes pulse-wave {
+  0%, 100% {
+    opacity: 0.6;
+  }
+  50% {
+    opacity: 1;
+  }
+}
+
+/* Mute Slash Line */
+.mute-slash {
+  stroke-dasharray: 32;
+  stroke-dashoffset: 32;
+  transition: stroke-dashoffset 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+  stroke: #f43f5e;
+}
+
+/* Checked (Muted) State */
+.mute-checkbox-input:checked + .mute-checkbox-container {
+  color: #94a3b8;
+  background: rgba(244, 63, 94, 0.08);
+  border-color: rgba(244, 63, 94, 0.3);
+}
+
+.mute-checkbox-input:checked + .mute-checkbox-container .soundwave {
+  opacity: 0;
+  transform: translateX(-4px);
+}
+
+.mute-checkbox-input:checked + .mute-checkbox-container .mute-slash {
+  stroke-dashoffset: 0;
+}
+
+.mute-checkbox-input:checked + .mute-checkbox-container .speaker-icon {
+  transform: scale(0.92);
+}

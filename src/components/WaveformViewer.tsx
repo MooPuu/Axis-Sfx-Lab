@@ -1,6 +1,7 @@
 import React, { useEffect, useRef, useState } from "react";
 import { LoopSettings } from "../services/audioService";
 import { IconLoop, IconPlay, IconPause, IconSeamAudition } from "./icons/DuotoneIcons";
+import { Slider } from "./ui/slider";
 
 interface WaveformViewerProps {
   peaks: number[];
@@ -14,6 +15,7 @@ interface WaveformViewerProps {
   onToggleLoop: () => void;
   onAuditionSeam: () => void;
   onChangeLoopRange: (startRatio: number, endRatio: number) => void;
+  onSeek: (ratio: number) => void;
 }
 
 export const WaveformViewer: React.FC<WaveformViewerProps> = ({
@@ -28,6 +30,7 @@ export const WaveformViewer: React.FC<WaveformViewerProps> = ({
   onToggleLoop,
   onAuditionSeam,
   onChangeLoopRange,
+  onSeek,
 }) => {
   const canvasRef = useRef<HTMLCanvasElement | null>(null);
   const containerRef = useRef<HTMLDivElement | null>(null);
@@ -198,6 +201,9 @@ export const WaveformViewer: React.FC<WaveformViewerProps> = ({
     return `${s.toFixed(2)}s`;
   };
 
+  const currentSeconds = (playbackProgress * (durationMs / 1000)).toFixed(2);
+  const totalSeconds = (durationMs / 1000).toFixed(2);
+
   return (
     <div className="flex flex-col rounded-2xl bg-neutral-900/90 border border-neutral-800 p-4 shadow-xl backdrop-blur-md">
       {/* Top Status & Controls */}
@@ -282,6 +288,26 @@ export const WaveformViewer: React.FC<WaveformViewerProps> = ({
             Drag blue/purple handles to refine loop window
           </div>
         )}
+      </div>
+
+      {/* shadcn/ui Playback Scrubbing Slider */}
+      <div className="pt-3 pb-1 space-y-1.5">
+        <div className="flex items-center justify-between text-[11px] font-mono text-neutral-400">
+          <span className="text-cyan-400">{currentSeconds}s</span>
+          <span className="text-[10px] text-neutral-500 uppercase tracking-wider">Playback Position</span>
+          <span className="text-neutral-300">{totalSeconds}s</span>
+        </div>
+        <Slider
+          value={[playbackProgress * 100]}
+          min={0}
+          max={100}
+          step={0.1}
+          onValueChange={(val) => {
+            const ratio = val[0] / 100;
+            onSeek(ratio);
+          }}
+          className="w-full cursor-pointer"
+        />
       </div>
 
       {/* Waveform Footer with Loop Indicators */}

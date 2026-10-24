@@ -56,21 +56,38 @@ export interface PresetInfo {
 
 class AudioPlayerEngine {
   private ctx: AudioContext | null = null;
+  private masterGain: GainNode | null = null;
   private currentSource: AudioBufferSourceNode | null = null;
   private audioBuffer: AudioBuffer | null = null;
   private seamBuffer: AudioBuffer | null = null;
   private startTime: number = 0;
   private isLooping: boolean = false;
   private isPlaying: boolean = false;
+  private isMuted: boolean = false;
+  private onEndedCallback: (() => void) | null = null;
 
   private initCtx() {
     if (!this.ctx) {
       const AudioCtx = window.AudioContext || (window as unknown as { webkitAudioContext: typeof AudioContext }).webkitAudioContext;
       this.ctx = new AudioCtx();
+      this.masterGain = this.ctx.createGain();
+      this.masterGain.gain.value = this.isMuted ? 0 : 1;
+      this.masterGain.connect(this.ctx.destination);
     }
     if (this.ctx.state === "suspended") {
       this.ctx.resume();
     }
+  }
+
+  public setMuted(muted: boolean) {
+    this.isMuted = muted;
+    if (this.masterGain && this.ctx) {
+      this.masterGain.gain.setValueAtTime(muted ? 0 : 1, this.ctx.currentTime);
+    }
+  }
+
+  public getIsMuted(): boolean {
+    return this.isMuted;
   }
 
   public async loadWavBase64(base64: string, isSeam: boolean = false): Promise<AudioBuffer> {
@@ -90,39 +107,52 @@ class AudioPlayerEngine {
     return decoded;
   }
 
-  public play(loop: boolean = false, onEnded?: () => void) {
-    if (!this.ctx || !this.audioBuffer) return;
+  public play(loop: boolean = false, onEnded?: () => void, offsetSeconds: number = 0) {
+    if (!this.ctx || !this.audioBuffer || !this.masterGain) return;
     this.stop();
 
     this.isLooping = loop;
     this.isPlaying = true;
+    this.onEndedCallback = onEnded || null;
 
     const source = this.ctx.createBufferSource();
     source.buffer = this.audioBuffer;
     source.loop = loop;
-    source.connect(this.ctx.destination);
+    source.connect(this.masterGain);
 
-    this.startTime = this.ctx.currentTime;
+    const safeOffset = Math.max(0, Math.min(offsetSeconds, this.audioBuffer.duration - 0.01));
+    this.startTime = this.ctx.currentTime - safeOffset;
+
     source.onended = () => {
       if (!this.isLooping) {
         this.isPlaying = false;
-        if (onEnded) onEnded();
+        if (this.onEndedCallback) {
+          this.onEndedCallback();
+        }
       }
     };
 
-    source.start(0);
+    source.start(0, safeOffset);
     this.currentSource = source;
   }
 
+  public seek(progressRatio: number) {
+    if (!this.audioBuffer) return;
+    const offset = progressRatio * this.audioBuffer.duration;
+    if (this.isPlaying) {
+      this.play(this.isLooping, this.onEndedCallback || undefined, offset);
+    }
+  }
+
   public playSeam(onEnded?: () => void) {
-    if (!this.ctx || !this.seamBuffer) return;
+    if (!this.ctx || !this.seamBuffer || !this.masterGain) return;
     this.stop();
 
     this.isPlaying = true;
     const source = this.ctx.createBufferSource();
     source.buffer = this.seamBuffer;
     source.loop = true; // Loop the seam for auditioning
-    source.connect(this.ctx.destination);
+    source.connect(this.masterGain);
 
     source.start(0);
     this.currentSource = source;
@@ -150,6 +180,15 @@ class AudioPlayerEngine {
     const dur = this.audioBuffer.duration;
     if (dur <= 0) return 0;
     return this.isLooping ? (elapsed % dur) / dur : Math.min(elapsed / dur, 1.0);
+  }
+
+  public getCurrentTime(): number {
+    if (!this.audioBuffer) return 0;
+    return this.getPlaybackProgress() * this.audioBuffer.duration;
+  }
+
+  public getDuration(): number {
+    return this.audioBuffer ? this.audioBuffer.duration : 0;
   }
 
   public getIsPlaying(): boolean {

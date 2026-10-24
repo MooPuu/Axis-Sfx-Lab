@@ -1,6 +1,13 @@
 import React from "react";
 import { LoopSettings } from "../services/audioService";
 import { IconLoop, IconCheck, IconSeamAudition } from "./icons/DuotoneIcons";
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from "./ui/select";
 
 interface LoopControlPanelProps {
   loopSettings: LoopSettings;
@@ -25,6 +32,12 @@ export const LoopControlPanel: React.FC<LoopControlPanelProps> = ({
 
   const startSample = Math.round(loopSettings.loop_start_ratio * (durationMs / 1000) * sampleRate);
   const endSample = Math.round(loopSettings.loop_end_ratio * (durationMs / 1000) * sampleRate);
+
+  const curveOptions = [
+    { id: "equal_power", name: "Equal Power (Cosine - 3dB Dip Free)" },
+    { id: "linear", name: "Linear Crossfade" },
+    { id: "s_curve", name: "S-Curve (Sigmoidal Smooth)" },
+  ];
 
   return (
     <div className="flex flex-col bg-neutral-900/90 rounded-2xl border border-neutral-800 p-5 shadow-xl backdrop-blur-md">
@@ -106,7 +119,7 @@ export const LoopControlPanel: React.FC<LoopControlPanelProps> = ({
             />
           </div>
 
-          {/* Feature 3: Seam Crossfade */}
+          {/* Feature 3: Seam Crossfade with shadcn/ui Select */}
           <div className="p-3.5 rounded-xl bg-neutral-950/60 border border-neutral-800/80 space-y-3">
             <div className="flex justify-between items-center">
               <div>
@@ -128,25 +141,24 @@ export const LoopControlPanel: React.FC<LoopControlPanelProps> = ({
               className="w-full h-1.5 bg-neutral-800 rounded-lg appearance-none cursor-pointer accent-cyan-400"
             />
 
-            {/* Crossfade Curve Selector */}
-            <div className="flex space-x-1 pt-1">
-              {[
-                { id: "equal_power", label: "Equal Power (Cosine)" },
-                { id: "linear", label: "Linear" },
-                { id: "s_curve", label: "S-Curve (Sigmoid)" },
-              ].map((curve) => (
-                <button
-                  key={curve.id}
-                  onClick={() => updateField("crossfade_curve", curve.id)}
-                  className={`flex-1 py-1.5 rounded-lg text-[10px] font-medium transition-all ${
-                    loopSettings.crossfade_curve === curve.id
-                      ? "bg-cyan-500/20 text-cyan-300 border border-cyan-500/40"
-                      : "bg-neutral-900 text-neutral-400 hover:text-neutral-200 border border-neutral-800"
-                  }`}
-                >
-                  {curve.label}
-                </button>
-              ))}
+            {/* shadcn/ui Select for Crossfade Curve */}
+            <div className="space-y-1">
+              <span className="text-[10px] text-neutral-400">Crossfade Mathematical Window</span>
+              <Select
+                value={loopSettings.crossfade_curve}
+                onValueChange={(val) => updateField("crossfade_curve", val)}
+              >
+                <SelectTrigger className="h-8 text-xs bg-neutral-900 border-neutral-800 text-cyan-300">
+                  <SelectValue placeholder="Select Crossfade Curve" />
+                </SelectTrigger>
+                <SelectContent>
+                  {curveOptions.map((c) => (
+                    <SelectItem key={c.id} value={c.id}>
+                      {c.name}
+                    </SelectItem>
+                  ))}
+                </SelectContent>
+              </Select>
             </div>
           </div>
 

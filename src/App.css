@@ -1,10 +1,62 @@
 @import "tailwindcss";
 
 @layer base {
-  body {
-    @apply bg-neutral-950 text-neutral-100 font-sans antialiased select-none;
-    overflow-x: hidden;
+  :root {
+    --bg-main: #0a0a0c;
+    --text-main: #f8fafc;
   }
+
+  html.light {
+    --bg-main: #f8fafc;
+    --text-main: #0f172a;
+  }
+
+  body {
+    background-color: var(--bg-main);
+    color: var(--text-main);
+    font-family: 'Inter', -apple-system, BlinkMacSystemFont, sans-serif;
+    user-select: none;
+    overflow-x: hidden;
+    transition: background-color 0.3s ease, color 0.3s ease;
+  }
+}
+
+/* Light mode adjustments */
+html.light .bg-neutral-950 {
+  background-color: #f1f5f9 !important;
+}
+
+html.light .bg-neutral-950\/80,
+html.light .bg-neutral-950\/60,
+html.light .bg-neutral-950\/50 {
+  background-color: rgba(241, 245, 249, 0.85) !important;
+}
+
+html.light .bg-neutral-900,
+html.light .bg-neutral-900\/90,
+html.light .bg-neutral-900\/80 {
+  background-color: #ffffff !important;
+}
+
+html.light .border-neutral-800,
+html.light .border-neutral-800\/80,
+html.light .border-neutral-800\/70,
+html.light .border-neutral-800\/60 {
+  border-color: #e2e8f0 !important;
+}
+
+html.light .text-neutral-100,
+html.light .text-neutral-200 {
+  color: #0f172a !important;
+}
+
+html.light .text-neutral-300,
+html.light .text-neutral-400 {
+  color: #475569 !important;
+}
+
+html.light .text-neutral-500 {
+  color: #64748b !important;
 }
 
 /* Custom scrollbars for lab workstation feel */
@@ -13,12 +65,12 @@
   height: 6px;
 }
 ::-webkit-scrollbar-track {
-  background: rgba(20, 20, 25, 0.8);
+  background: rgba(20, 20, 25, 0.15);
 }
 ::-webkit-scrollbar-thumb {
-  background: rgba(80, 80, 100, 0.5);
+  background: rgba(100, 116, 139, 0.3);
   border-radius: 3px;
 }
 ::-webkit-scrollbar-thumb:hover {
-  background: rgba(120, 120, 150, 0.8);
+  background: rgba(100, 116, 139, 0.6);
 }

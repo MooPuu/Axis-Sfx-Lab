@@ -1,6 +1,7 @@
 import React, { useState } from "react";
 import { triggerBrowserDownload } from "../services/audioService";
 import { IconDownload, IconFolder } from "./icons/DuotoneIcons";
+import { toast } from "./ui/use-toast";
 
 interface GameEngineExportModalProps {
   isOpen: boolean;
@@ -26,6 +27,11 @@ export const GameEngineExportModal: React.FC<GameEngineExportModalProps> = ({
   const handleDownload = () => {
     const finalName = fileName.endsWith(".wav") ? fileName : `${fileName}.wav`;
     triggerBrowserDownload(wavBase64, finalName);
+    toast({
+      title: "Audio Exported Successfully",
+      description: `Saved ${finalName} with embedded RIFF smpl chunk for ${selectedEngine}.`,
+      variant: "success",
+    });
   };
 
   const unitySnippet = `// Double-Buffered Seamless Loop Handoff for Unity
@@ -75,6 +81,11 @@ player.play()`;
   const copyCode = (code: string) => {
     navigator.clipboard.writeText(code);
     setCopiedCode(true);
+    toast({
+      title: "Code Copied to Clipboard",
+      description: `Copied ${selectedEngine} integration blueprint snippet.`,
+      variant: "default",
+    });
     setTimeout(() => setCopiedCode(false), 2000);
   };
 
