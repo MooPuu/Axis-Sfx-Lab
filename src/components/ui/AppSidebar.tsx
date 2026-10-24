@@ -1,7 +1,6 @@
 import React, { useState } from "react";
 import { PresetInfo } from "../../services/audioService";
 import {
-  IconLogo,
   IconImpact,
   IconMotor,
   IconUI,
@@ -80,19 +79,25 @@ export const AppSidebar: React.FC<AppSidebarProps> = ({
       <div className="h-16 px-4 flex items-center justify-between border-b border-inherit">
         {!isCollapsed && (
           <div className="flex items-center space-x-2.5 overflow-hidden">
-            <div className="p-1.5 rounded-lg bg-cyan-500/10 border border-cyan-500/20 text-cyan-400 shrink-0">
-              <IconLogo size={20} />
-            </div>
+            <img
+              src="/app-icon.png"
+              alt="Axis SFX Lab"
+              className="w-8 h-8 rounded-full object-contain shrink-0 shadow-sm border border-neutral-700/60"
+            />
             <div className="truncate">
-              <div className="text-xs font-bold tracking-tight truncate">Axis SFX Lab</div>
+              <div className="text-xs font-bold tracking-tight truncate text-neutral-100">Axis SFX Lab</div>
               <div className="text-[10px] text-neutral-400 truncate">Mahdi Kareem © 2026</div>
             </div>
           </div>
         )}
 
         {isCollapsed && (
-          <div className="mx-auto p-1.5 rounded-lg bg-cyan-500/10 text-cyan-400">
-            <IconLogo size={20} />
+          <div className="mx-auto">
+            <img
+              src="/app-icon.png"
+              alt="Axis SFX Lab"
+              className="w-7 h-7 rounded-full object-contain shadow-sm border border-neutral-700/60"
+            />
           </div>
         )}
 

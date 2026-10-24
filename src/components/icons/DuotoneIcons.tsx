@@ -243,3 +243,11 @@ export const IconFileAudio: React.FC<IconProps> = ({ className = "text-teal-400"
     <path d="M8 15V13M12 17V11M16 15V13" stroke="currentColor" strokeWidth="2" strokeLinecap="round" />
   </svg>
 );
+
+export const IconVolume: React.FC<IconProps> = ({ className = "text-cyan-400", size = 18 }) => (
+  <svg width={size} height={size} viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg" className={className}>
+    <path d="M11 5L6 9H2V15H6L11 19V5Z" className="fill-current opacity-25" stroke="currentColor" strokeWidth="1.8" strokeLinejoin="round" />
+    <path d="M15.54 8.46C16.48 9.4 17 10.68 17 12C17 13.32 16.48 14.6 15.54 15.54" stroke="currentColor" strokeWidth="2" strokeLinecap="round" />
+    <path d="M19.07 4.93C20.95 6.81 22 9.35 22 12C22 14.65 20.95 17.19 19.07 19.07" stroke="currentColor" strokeWidth="2" strokeLinecap="round" opacity="0.4" />
+  </svg>
+);

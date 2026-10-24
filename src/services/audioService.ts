@@ -87,6 +87,7 @@ class AudioPlayerEngine {
   private isLooping: boolean = false;
   private isPlaying: boolean = false;
   private isMuted: boolean = false;
+  private volume: number = 0.85;
   private onEndedCallback: (() => void) | null = null;
 
   private initCtx() {
@@ -94,7 +95,7 @@ class AudioPlayerEngine {
       const AudioCtx = window.AudioContext || (window as unknown as { webkitAudioContext: typeof AudioContext }).webkitAudioContext;
       this.ctx = new AudioCtx();
       this.masterGain = this.ctx.createGain();
-      this.masterGain.gain.value = this.isMuted ? 0 : 1;
+      this.masterGain.gain.value = this.isMuted ? 0 : this.volume;
       this.masterGain.connect(this.ctx.destination);
     }
     if (this.ctx.state === "suspended") {
@@ -105,12 +106,23 @@ class AudioPlayerEngine {
   public setMuted(muted: boolean) {
     this.isMuted = muted;
     if (this.masterGain && this.ctx) {
-      this.masterGain.gain.setValueAtTime(muted ? 0 : 1, this.ctx.currentTime);
+      this.masterGain.gain.setValueAtTime(muted ? 0 : this.volume, this.ctx.currentTime);
     }
   }
 
   public getIsMuted(): boolean {
     return this.isMuted;
+  }
+
+  public setVolume(vol: number) {
+    this.volume = Math.max(0, Math.min(1, vol));
+    if (this.masterGain && this.ctx && !this.isMuted) {
+      this.masterGain.gain.setValueAtTime(this.volume, this.ctx.currentTime);
+    }
+  }
+
+  public getVolume(): number {
+    return this.volume;
   }
 
   public async loadWavBase64(base64: string, isSeam: boolean = false): Promise<AudioBuffer> {

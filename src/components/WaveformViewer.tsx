@@ -1,6 +1,12 @@
 import React, { useEffect, useRef, useState } from "react";
 import { LoopSettings } from "../services/audioService";
-import { IconLoop, IconPlay, IconPause, IconSeamAudition } from "./icons/DuotoneIcons";
+import {
+  IconLoop,
+  IconPlay,
+  IconPause,
+  IconSeamAudition,
+  IconVolume,
+} from "./icons/DuotoneIcons";
 import { Slider } from "./ui/slider";
 
 interface WaveformViewerProps {
@@ -11,6 +17,8 @@ interface WaveformViewerProps {
   isSeamPlaying: boolean;
   loopSettings: LoopSettings;
   playbackProgress: number;
+  volume: number;
+  onChangeVolume: (val: number) => void;
   onTogglePlay: () => void;
   onToggleLoop: () => void;
   onAuditionSeam: () => void;
@@ -26,6 +34,8 @@ export const WaveformViewer: React.FC<WaveformViewerProps> = ({
   isSeamPlaying,
   loopSettings,
   playbackProgress,
+  volume,
+  onChangeVolume,
   onTogglePlay,
   onToggleLoop,
   onAuditionSeam,
@@ -34,7 +44,9 @@ export const WaveformViewer: React.FC<WaveformViewerProps> = ({
 }) => {
   const canvasRef = useRef<HTMLCanvasElement | null>(null);
   const containerRef = useRef<HTMLDivElement | null>(null);
+  const volumeTrackRef = useRef<HTMLDivElement | null>(null);
   const [isDragging, setIsDragging] = useState<"start" | "end" | null>(null);
+  const [isDraggingVolume, setIsDraggingVolume] = useState<boolean>(false);
   const [dimensions, setDimensions] = useState({ width: 0, height: 144 });
 
   // Responsive dynamic resize observer so canvas scales perfectly with any window size
@@ -74,11 +86,12 @@ export const WaveformViewer: React.FC<WaveformViewerProps> = ({
     ctx.scale(dpr, dpr);
 
     const centerY = height / 2;
+    const isLight = document.documentElement.classList.contains("light");
 
     ctx.clearRect(0, 0, width, height);
 
-    // Background grid lines
-    ctx.strokeStyle = "rgba(255, 255, 255, 0.04)";
+    // Background grid lines (contrast-aware)
+    ctx.strokeStyle = isLight ? "rgba(15, 23, 42, 0.08)" : "rgba(255, 255, 255, 0.05)";
     ctx.lineWidth = 1;
     ctx.beginPath();
     ctx.moveTo(0, centerY);
@@ -101,38 +114,43 @@ export const WaveformViewer: React.FC<WaveformViewerProps> = ({
       const endX = loopSettings.loop_end_ratio * width;
 
       const loopGrad = ctx.createLinearGradient(startX, 0, endX, 0);
-      loopGrad.addColorStop(0, "rgba(56, 189, 248, 0.08)");
-      loopGrad.addColorStop(1, "rgba(168, 85, 247, 0.08)");
+      if (isLight) {
+        loopGrad.addColorStop(0, "rgba(2, 132, 199, 0.12)");
+        loopGrad.addColorStop(1, "rgba(124, 58, 237, 0.12)");
+      } else {
+        loopGrad.addColorStop(0, "rgba(56, 189, 248, 0.1)");
+        loopGrad.addColorStop(1, "rgba(168, 85, 247, 0.1)");
+      }
       ctx.fillStyle = loopGrad;
       ctx.fillRect(startX, 0, endX - startX, height);
 
       // Loop boundary markers
-      ctx.strokeStyle = "#38bdf8";
-      ctx.lineWidth = 1.5;
+      ctx.strokeStyle = isLight ? "#0284c7" : "#38bdf8";
+      ctx.lineWidth = 1.8;
       ctx.beginPath();
       ctx.moveTo(startX, 0);
       ctx.lineTo(startX, height);
       ctx.stroke();
 
-      ctx.strokeStyle = "#a855f7";
+      ctx.strokeStyle = isLight ? "#7c3aed" : "#a855f7";
       ctx.beginPath();
       ctx.moveTo(endX, 0);
       ctx.lineTo(endX, height);
       ctx.stroke();
 
       // Handles
-      ctx.fillStyle = "#38bdf8";
+      ctx.fillStyle = isLight ? "#0284c7" : "#38bdf8";
       ctx.beginPath();
       ctx.arc(startX, 12, 5, 0, Math.PI * 2);
       ctx.fill();
 
-      ctx.fillStyle = "#a855f7";
+      ctx.fillStyle = isLight ? "#7c3aed" : "#a855f7";
       ctx.beginPath();
       ctx.arc(endX, height - 12, 5, 0, Math.PI * 2);
       ctx.fill();
     }
 
-    // Draw Waveform Bars
+    // Draw Waveform Bars (high-contrast punch)
     const numPeaks = peaks.length;
     if (numPeaks > 0) {
       const barWidth = width / numPeaks;
@@ -150,9 +168,9 @@ export const WaveformViewer: React.FC<WaveformViewerProps> = ({
           normX <= loopSettings.loop_end_ratio;
 
         if (inLoop) {
-          ctx.fillStyle = "#38bdf8";
+          ctx.fillStyle = isLight ? "#0284c7" : "#38bdf8";
         } else {
-          ctx.fillStyle = "rgba(148, 163, 184, 0.35)";
+          ctx.fillStyle = isLight ? "rgba(51, 65, 85, 0.45)" : "rgba(148, 163, 184, 0.35)";
         }
 
         ctx.fillRect(x, y, Math.max(barWidth - 0.5, 1), barHeight);
@@ -162,9 +180,9 @@ export const WaveformViewer: React.FC<WaveformViewerProps> = ({
     // Draw Playhead
     if (isPlaying) {
       const playheadX = playbackProgress * width;
-      ctx.strokeStyle = "#4ade80";
+      ctx.strokeStyle = "#10b981";
       ctx.lineWidth = 2;
-      ctx.shadowColor = "#4ade80";
+      ctx.shadowColor = "#10b981";
       ctx.shadowBlur = 8;
       ctx.beginPath();
       ctx.moveTo(playheadX, 0);
@@ -217,6 +235,41 @@ export const WaveformViewer: React.FC<WaveformViewerProps> = ({
   const handleMouseUp = () => {
     setIsDragging(null);
   };
+
+  // Vertical Volume Slider Dragging
+  const updateVolumeFromMouse = (clientY: number) => {
+    if (!volumeTrackRef.current) return;
+    const rect = volumeTrackRef.current.getBoundingClientRect();
+    const ratio = 1 - (clientY - rect.top) / rect.height;
+    onChangeVolume(Math.max(0, Math.min(1, ratio)));
+  };
+
+  const handleVolumeMouseDown = (e: React.MouseEvent<HTMLDivElement>) => {
+    e.preventDefault();
+    setIsDraggingVolume(true);
+    updateVolumeFromMouse(e.clientY);
+  };
+
+  useEffect(() => {
+    const handleMove = (e: MouseEvent) => {
+      if (isDraggingVolume) {
+        updateVolumeFromMouse(e.clientY);
+      }
+    };
+    const handleUp = () => {
+      if (isDraggingVolume) {
+        setIsDraggingVolume(false);
+      }
+    };
+    if (isDraggingVolume) {
+      window.addEventListener("mousemove", handleMove);
+      window.addEventListener("mouseup", handleUp);
+    }
+    return () => {
+      window.removeEventListener("mousemove", handleMove);
+      window.removeEventListener("mouseup", handleUp);
+    };
+  }, [isDraggingVolume]);
 
   const formatTime = (ms: number) => {
     const s = ms / 1000;
@@ -290,34 +343,64 @@ export const WaveformViewer: React.FC<WaveformViewerProps> = ({
         </div>
       </div>
 
-      {/* Canvas Waveform View */}
-      <div
-        ref={containerRef}
-        className="relative w-full h-32 sm:h-36 md:h-40 bg-neutral-950/80 rounded-xl border border-neutral-800/90 overflow-hidden select-none cursor-crosshair group min-w-0"
-      >
-        <canvas
-          ref={canvasRef}
-          onMouseDown={handleMouseDown}
-          onMouseMove={handleMouseMove}
-          onMouseUp={handleMouseUp}
-          onMouseLeave={handleMouseUp}
-          className="w-full h-full block"
-        />
+      {/* Main Waveform Canvas & Vertical Volume Slider Row */}
+      <div className="flex items-stretch gap-2.5 sm:gap-3 w-full min-w-0">
+        {/* Left: Canvas Waveform View */}
+        <div
+          ref={containerRef}
+          className="relative flex-1 h-32 sm:h-36 md:h-40 bg-neutral-950/80 rounded-xl border border-neutral-800/90 overflow-hidden select-none cursor-crosshair group min-w-0"
+        >
+          <canvas
+            ref={canvasRef}
+            onMouseDown={handleMouseDown}
+            onMouseMove={handleMouseMove}
+            onMouseUp={handleMouseUp}
+            onMouseLeave={handleMouseUp}
+            className="w-full h-full block"
+          />
 
-        {/* Helper Hint Overlay */}
-        {loopSettings.enabled && (
-          <div className="absolute top-2 left-3 pointer-events-none opacity-0 group-hover:opacity-100 transition-opacity text-[10px] text-neutral-400 bg-neutral-900/90 px-2 py-0.5 rounded border border-neutral-800">
-            Drag blue/purple handles to refine loop window
+          {/* Helper Hint Overlay */}
+          {loopSettings.enabled && (
+            <div className="absolute top-2 left-3 pointer-events-none opacity-0 group-hover:opacity-100 transition-opacity text-[10px] text-neutral-400 bg-neutral-900/90 px-2 py-0.5 rounded border border-neutral-800">
+              Drag blue/purple handles to refine loop window
+            </div>
+          )}
+        </div>
+
+        {/* Right: Studio Vertical Volume Control Slider */}
+        <div className="flex flex-col items-center justify-between py-2.5 px-2 rounded-xl bg-neutral-950/80 border border-neutral-800/90 w-12 sm:w-14 shrink-0 select-none">
+          {/* Level readout */}
+          <span className="text-[10px] font-mono text-cyan-400 font-bold tracking-tight">
+            {Math.round(volume * 100)}%
+          </span>
+
+          {/* Vertical Slider Track */}
+          <div
+            ref={volumeTrackRef}
+            onMouseDown={handleVolumeMouseDown}
+            className="relative flex-1 w-2.5 my-2 bg-neutral-800 rounded-full cursor-pointer flex flex-col justify-end overflow-hidden group/vol shadow-inner"
+            title={`Master Volume Level: ${Math.round(volume * 100)}% (Click or Drag)`}
+          >
+            {/* Filled Level with gradient */}
+            <div
+              className="w-full bg-gradient-to-t from-cyan-500 via-sky-400 to-emerald-400 rounded-full transition-all duration-75 shadow-sm"
+              style={{ height: `${volume * 100}%` }}
+            />
           </div>
-        )}
+
+          {/* Icon */}
+          <div className="text-neutral-400 hover:text-cyan-400 transition-colors">
+            <IconVolume size={16} />
+          </div>
+        </div>
       </div>
 
       {/* shadcn/ui Playback Scrubbing Slider */}
       <div className="pt-2.5 pb-1 space-y-1 min-w-0">
         <div className="flex items-center justify-between text-[11px] font-mono text-neutral-400">
-          <span className="text-cyan-400">{currentSeconds}s</span>
+          <span className="text-cyan-400 font-semibold">{currentSeconds}s</span>
           <span className="text-[10px] text-neutral-500 uppercase tracking-wider">Playback Position</span>
-          <span className="text-neutral-300">{totalSeconds}s</span>
+          <span className="text-neutral-300 font-semibold">{totalSeconds}s</span>
         </div>
         <Slider
           value={[playbackProgress * 100]}

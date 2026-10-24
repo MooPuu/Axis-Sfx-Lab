@@ -21,7 +21,6 @@ import { Progress } from "./components/ui/progress";
 import { Toaster } from "./components/ui/toaster";
 import { toast } from "./components/ui/use-toast";
 import {
-  IconLogo,
   IconSparkles,
   IconDice,
   IconLayers,
@@ -77,8 +76,14 @@ export default function App() {
     return (localStorage.getItem("axis_sfx_theme") as "dark" | "light") || "dark";
   });
 
-  // Audio mute state
+  // Audio mute & volume state
   const [isMuted, setIsMuted] = useState<boolean>(false);
+  const [volume, setVolume] = useState<number>(() => audioPlayer.getVolume());
+
+  const handleChangeVolume = (newVol: number) => {
+    setVolume(newVol);
+    audioPlayer.setVolume(newVol);
+  };
 
   // Sidebar collapse state
   const [isSidebarCollapsed, setIsSidebarCollapsed] = useState<boolean>(false);
@@ -361,13 +366,17 @@ export default function App() {
   return (
     <div className="h-screen max-h-screen w-screen overflow-hidden flex flex-col font-sans select-none bg-neutral-950 text-neutral-100">
       {/* Top Application Header (Clean minimal, menubar removed) */}
-      <header className="h-14 px-4 sm:px-5 bg-neutral-900/90 border-b border-neutral-800/80 backdrop-blur-md flex items-center justify-between shrink-0 z-40">
-        {/* Left: Clean Branding Only */}
-        <div className="flex items-center space-x-2.5 shrink-0">
-          <div className="p-1.5 rounded-lg bg-cyan-500/10 border border-cyan-500/20 text-cyan-400">
-            <IconLogo size={20} />
-          </div>
-          <span className="text-sm font-bold tracking-tight text-neutral-100">Axis SFX Lab</span>
+      <header className="h-14 px-4 sm:px-5 bg-neutral-900/90 border-b border-neutral-800/80 backdrop-blur-md flex items-center justify-between shrink-0 z-40 relative">
+        {/* Left spacer - icon and name removed per user request */}
+        <div className="w-8 shrink-0" />
+
+        {/* Center: Axis Tools Official Logo */}
+        <div className="absolute left-1/2 -translate-x-1/2 flex items-center justify-center pointer-events-none">
+          <img
+            src={theme === "dark" ? "/axis-tools-logo-dark.png" : "/axis-tools-logo.png"}
+            alt="Axis Tools"
+            className="h-6 sm:h-7 w-auto object-contain select-none"
+          />
         </div>
 
         {/* Right: Actions, Uiverse Catraco Mute Checkbox, and Uiverse Metanef Theme Switch in Top-Right Corner */}
@@ -450,6 +459,8 @@ export default function App() {
             isSeamPlaying={isSeamPlaying}
             loopSettings={loopSettings}
             playbackProgress={playbackProgress}
+            volume={volume}
+            onChangeVolume={handleChangeVolume}
             onTogglePlay={handleTogglePlay}
             onToggleLoop={handleToggleLoop}
             onAuditionSeam={handleAuditionSeam}
