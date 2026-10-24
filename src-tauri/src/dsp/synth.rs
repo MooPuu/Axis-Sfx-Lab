@@ -1,15 +1,23 @@
 use std::f32::consts::PI;
 use crate::dsp::effects::{apply_drive_and_bitcrush, DelayEffect, Freeverb, SvfFilter};
 
-/// Linear congruential / simple deterministic PRNG for audio noise and parameter jitter
+/// High-performance deterministic PRNG with Pink & Brown noise spectral shaping
 pub struct FastRng {
     state: u64,
+    b0: f32,
+    b1: f32,
+    b2: f32,
+    brown: f32,
 }
 
 impl FastRng {
     pub fn new(seed: u64) -> Self {
         Self {
             state: if seed == 0 { 0x853c49e6748fea9b } else { seed },
+            b0: 0.0,
+            b1: 0.0,
+            b2: 0.0,
+            brown: 0.0,
         }
     }
 
@@ -27,6 +35,22 @@ impl FastRng {
     #[inline]
     pub fn next_bipolar(&mut self) -> f32 {
         self.next_f32() * 2.0 - 1.0
+    }
+
+    #[inline]
+    pub fn next_pink(&mut self) -> f32 {
+        let white = self.next_bipolar();
+        self.b0 = 0.99886 * self.b0 + white * 0.0555179;
+        self.b1 = 0.99332 * self.b1 + white * 0.0750759;
+        self.b2 = 0.96900 * self.b2 + white * 0.1538520;
+        (self.b0 + self.b1 + self.b2 + white * 0.5362) * 0.18
+    }
+
+    #[inline]
+    pub fn next_brown(&mut self) -> f32 {
+        let white = self.next_bipolar();
+        self.brown = (self.brown + 0.02 * white) / 1.02;
+        self.brown * 3.5
     }
 }
 
@@ -94,9 +118,12 @@ pub fn generate_sound(params: &SynthParams) -> (Vec<f32>, Vec<f32>) {
     let mut peak = 0.001f32;
 
     for i in 0..total_samples {
-        // Filter
-        let fl = filter_l.process_lp(left[i], sr);
-        let fr = filter_r.process_lp(right[i], sr);
+        // Filter only if cutoff is under 15000 Hz to retain high-end sparkle
+        let (fl, fr) = if params.filter_cutoff < 15000.0 {
+            (filter_l.process_lp(left[i], sr), filter_r.process_lp(right[i], sr))
+        } else {
+            (left[i], right[i])
+        };
 
         // Saturation & Bitcrush
         let drv_l = apply_drive_and_bitcrush(fl, params.drive, params.bitcrush);
@@ -127,7 +154,7 @@ pub fn generate_sound(params: &SynthParams) -> (Vec<f32>, Vec<f32>) {
 }
 
 // -------------------------------------------------------------
-// 1. IMPACT & COLLISION (Modal Synthesis)
+// 1. IMPACT & COLLISION (Multi-Layer Physical Modal Synthesis)
 // -------------------------------------------------------------
 fn generate_impact(
     left: &mut [f32],
@@ -149,6 +176,18 @@ fn generate_impact(
     let base_f = params.base_freq.clamp(20.0, 4000.0);
     let damp_factor = params.damping.clamp(0.05, 5.0) * 15.0;
 
+    // Layer 1: Sub-bass weight body (gives chest punch to heavy impacts)
+    let sub_len = ((sr * 0.15).round() as usize).min(total);
+    for i in 0..sub_len {
+        let t = i as f32 / sr;
+        let sub_pitch = (base_f.min(100.0) * (-t * 30.0).exp() + 35.0) * (2.0 * PI / sr);
+        let sub_env = (-t * 22.0).exp();
+        let sub_val = (i as f32 * sub_pitch).sin() * sub_env * 1.2;
+        left[i] += sub_val;
+        right[i] += sub_val;
+    }
+
+    // Layer 2: Modal Material Resonance
     for (m_idx, &ratio) in mode_ratios.iter().enumerate() {
         let f = (base_f * ratio).min(sr * 0.48);
         let mode_damp = damp_factor * (1.0 + (m_idx as f32) * 0.5 * (1.0 - params.brightness));
@@ -159,25 +198,25 @@ fn generate_impact(
             let t = i as f32 / sr;
             let env = (-t * mode_damp).exp();
             let sig = (2.0 * PI * f * t + phase).sin() * env * amp;
-            
-            let pan = (m_idx as f32 / mode_ratios.len() as f32) * params.stereo_spread;
+
+            let pan = ((m_idx as f32 / mode_ratios.len() as f32) * 2.0 - 1.0) * params.stereo_spread;
             left[i] += sig * (1.0 - pan * 0.5);
             right[i] += sig * (1.0 + pan * 0.5);
         }
     }
 
-    let attack_len = ((sr * 0.015).round() as usize).min(total);
-    for i in 0..attack_len {
-        let t = i as f32 / attack_len as f32;
-        let env = 1.0 - t;
-        let n = rng.next_bipolar() * env * params.noise_mix * 1.5;
-        left[i] += n;
-        right[i] += n;
+    // Layer 3: Initial Strike Transient & Crack
+    let crack_len = ((sr * 0.025).round() as usize).min(total);
+    for i in 0..crack_len {
+        let env = (1.0 - i as f32 / crack_len as f32).powi(3);
+        let crack = rng.next_bipolar() * env * params.noise_mix * 1.8;
+        left[i] += crack;
+        right[i] += crack;
     }
 }
 
 // -------------------------------------------------------------
-// 2. MOTOR & MECHANICAL HUM
+// 2. MOTOR & ENGINES (Harmonic Combustion & Turbines)
 // -------------------------------------------------------------
 fn generate_motor(
     left: &mut [f32],
@@ -187,15 +226,15 @@ fn generate_motor(
     sr: f32,
 ) {
     let total = left.len();
-    let num_harmonics = params.harmonic_count.clamp(1, 12) as usize;
+    let rpm_base = params.base_freq.clamp(20.0, 1000.0);
+    let num_harmonics = params.harmonic_count.clamp(1, 12);
     let mut phase = 0.0f32;
-    let base_f = params.base_freq.clamp(10.0, 800.0);
 
     for i in 0..total {
         let t = i as f32 / sr;
-        let flutter = (2.0 * PI * 4.0 * t).sin() * params.jitter_amount * 0.08
-            + rng.next_bipolar() * params.jitter_amount * 0.02;
-        let cur_f = (base_f * (1.0 + flutter)).clamp(5.0, sr * 0.45);
+        // RPM flutter & engine jitter
+        let flutter = (2.0 * PI * 4.5 * t).sin() * params.jitter_amount * 0.08;
+        let cur_f = rpm_base * (1.0 + flutter);
 
         phase += (2.0 * PI * cur_f) / sr;
         if phase > 2.0 * PI {
@@ -210,7 +249,7 @@ fn generate_motor(
         }
 
         let sub = (phase * 0.5).sin() * 0.4;
-        let brush = rng.next_bipolar() * (phase.sin().abs().powi(4)) * params.noise_mix * 0.5;
+        let brush = rng.next_pink() * (phase.sin().abs().powi(4)) * params.noise_mix * 0.7;
         let combined = (sample + sub + brush) * 0.5;
         let pan = (2.0 * PI * 1.5 * t).sin() * params.stereo_spread * 0.2;
 
@@ -220,7 +259,7 @@ fn generate_motor(
 }
 
 // -------------------------------------------------------------
-// 3. UI & MICRO-INTERACTIONS
+// 3. UI, NOTIFICATIONS, CLICKS & TYPING (Pixabay Authentic)
 // -------------------------------------------------------------
 fn generate_ui(
     left: &mut [f32],
@@ -230,34 +269,96 @@ fn generate_ui(
     sr: f32,
 ) {
     let total = left.len();
-    let base_f = params.base_freq.clamp(100.0, 5000.0);
-    let decay_sec = (params.decay_ms / 1000.0).max(0.005);
-    let mut phase = 0.0f32;
+    let base_f = params.base_freq.clamp(80.0, 4200.0);
+    let decay_sec = (params.decay_ms / 1000.0).max(0.008);
 
-    for i in 0..total {
-        let t = i as f32 / sr;
-        let env = (-t / decay_sec * 6.0).exp();
-        let pitch_bend = (-(t * params.pitch_decay * 40.0)).exp();
-        let cur_f = base_f * (1.0 + pitch_bend * 2.0);
+    match params.material_preset.as_str() {
+        "glass" => {
+            // Modern Dual-Tone Musical Notification Chime (Pixabay Notification)
+            let note2_start = ((sr * 0.055).round() as usize).min(total / 2); // 55ms offset chime
+            let f1 = base_f;
+            let f2 = base_f * if params.pitch_decay > 0.0 { 1.5 } else { 1.2599 }; // Perfect 5th or Major 3rd
+            let mut phase1 = 0.0f32;
+            let mut phase2 = 0.0f32;
 
-        phase += (2.0 * PI * cur_f) / sr;
-        let tone = (phase).sin() * env;
+            for i in 0..total {
+                let t = i as f32 / sr;
+                let env1 = (-t / (decay_sec * 0.7) * 4.5).exp();
+                phase1 += (2.0 * PI * f1) / sr;
+                let sig1 = (phase1.sin() + (phase1 * 2.0).sin() * 0.25 * params.brightness) * env1;
 
-        let click = if i < 150 {
-            rng.next_bipolar() * (1.0 - i as f32 / 150.0) * params.noise_mix
-        } else {
-            0.0
-        };
+                let sig2 = if i >= note2_start {
+                    let t2 = (i - note2_start) as f32 / sr;
+                    let env2 = (-t2 / decay_sec * 4.0).exp();
+                    phase2 += (2.0 * PI * f2) / sr;
+                    (phase2.sin() + (phase2 * 2.0).sin() * 0.3 * params.brightness) * env2
+                } else {
+                    0.0
+                };
 
-        let chime = (phase * 1.5).sin() * env * params.brightness * 0.4;
-        let combined = tone + click + chime;
-        left[i] = combined;
-        right[i] = combined;
+                let click = if i < 35 { rng.next_bipolar() * (1.0 - i as f32 / 35.0) * 0.1 } else { 0.0 };
+                let combined = sig1 * 0.65 + sig2 * 0.85 + click;
+                left[i] = combined * 0.95;
+                right[i] = combined * 1.05;
+            }
+        }
+        "wood" => {
+            // Mechanical Keyboard Keystroke (Pixabay Typing)
+            // 1. High plastic switch click (<2ms)
+            // 2. Hollow keycap cavity thump (280-360 Hz)
+            let mut cavity_filter = SvfFilter::new(320.0, 2.8);
+            let mut click_filter = SvfFilter::new(4800.0, 1.8);
+
+            for i in 0..total {
+                let t = i as f32 / sr;
+                let click_env = if i < 120 { (-t * 1200.0).exp() } else { 0.0 };
+                let raw_click = rng.next_bipolar() * click_env;
+                let click = click_filter.process_hp(raw_click, sr);
+
+                let cavity_env = (-t * 55.0).exp();
+                let cavity_osc = (2.0 * PI * (base_f * 0.4) * t).sin() * cavity_env;
+                let cavity = cavity_filter.process_lp(cavity_osc, sr);
+
+                let combined = click * 1.8 * params.noise_mix + cavity * 1.2;
+                left[i] = combined;
+                right[i] = combined;
+            }
+        }
+        "flesh" => {
+            // Tactile Bubble / Water Drop Pop (Pixabay UI Notification)
+            // Fast upward or downward pitch chirp with zero harshness
+            let mut phase = 0.0f32;
+            for i in 0..total {
+                let t = i as f32 / sr;
+                let t_norm = (t / decay_sec).clamp(0.0, 1.0);
+                let env = (-t_norm * 5.0).exp();
+                let cur_f = base_f * (0.6 + (-t * 80.0).exp() * 1.4);
+                phase += (2.0 * PI * cur_f) / sr;
+                let sig = phase.sin() * env;
+                left[i] = sig;
+                right[i] = sig;
+            }
+        }
+        _ => {
+            // Crisp Tactile Micro-Click (Mouse switch / button press)
+            let mut filter = SvfFilter::new(base_f * 1.5, 2.0);
+            let mut phase = 0.0f32;
+            for i in 0..total {
+                let t = i as f32 / sr;
+                let env = (-t * 180.0).exp();
+                let click = if i < 80 { rng.next_bipolar() * (-t * 800.0).exp() * params.noise_mix } else { 0.0 };
+                phase += (2.0 * PI * base_f) / sr;
+                let body = phase.sin() * env;
+                let filtered = filter.process_bp(click * 1.5 + body, sr);
+                left[i] = filtered;
+                right[i] = filtered;
+            }
+        }
     }
 }
 
 // -------------------------------------------------------------
-// 4. SCI-FI & ENERGY
+// 4. SCI-FI & GLITCH (FM Modulation & Granular Stutter)
 // -------------------------------------------------------------
 fn generate_scifi(
     left: &mut [f32],
@@ -273,6 +374,9 @@ fn generate_scifi(
     let mut carrier_phase = 0.0f32;
     let mut mod_phase = 0.0f32;
 
+    let is_glitch = params.material_preset == "metal" || params.bitcrush > 0.04;
+    let grain_size = ((sr * 0.028) as usize).max(64); // 28ms glitch grain
+
     for i in 0..total {
         let t = i as f32 / sr;
         let t_norm = (t / decay_sec).clamp(0.0, 1.0);
@@ -281,7 +385,7 @@ fn generate_scifi(
         let f_carrier = (start_f * sweep).max(20.0);
         let f_mod = f_carrier * params.fm_ratio.clamp(0.2, 10.0);
 
-        let fm_env = (-t_norm * 4.0).exp() * params.fm_depth * 15.0;
+        let fm_env = (-t_norm * 4.0).exp() * params.fm_depth * 18.0;
 
         mod_phase += (2.0 * PI * f_mod) / sr;
         let modulator = (mod_phase).sin() * fm_env;
@@ -290,7 +394,14 @@ fn generate_scifi(
         let carrier = (carrier_phase).sin();
 
         let amp_env = (-t_norm * 3.5).exp();
-        let sig = carrier * amp_env;
+        let mut sig = carrier * amp_env;
+
+        // Glitch stutter: repeat grains
+        if is_glitch && i > grain_size * 2 && (i / grain_size) % 3 == 0 {
+            let grain_offset = i % grain_size;
+            let glitch_pulse = (grain_offset as f32 / grain_size as f32 * 2.0 * PI).sin();
+            sig = sig * 0.4 + glitch_pulse * 0.6;
+        }
 
         let pan = (t_norm * 2.0 - 1.0) * params.stereo_spread;
         left[i] = sig * (1.0 - pan * 0.5);
@@ -299,7 +410,7 @@ fn generate_scifi(
 }
 
 // -------------------------------------------------------------
-// 5. FOOTSTEP & FOLEY
+// 5. FOOTSTEP & FOLEY (Physiological Dual-Contact Human Model)
 // -------------------------------------------------------------
 fn generate_footstep(
     left: &mut [f32],
@@ -310,41 +421,48 @@ fn generate_footstep(
 ) {
     let total = left.len();
     let base_f = params.base_freq.clamp(40.0, 200.0);
-    let mut thud_filter = SvfFilter::new(base_f * 2.0, 1.5);
-    
-    let scuff_cutoff = match params.material_preset.as_str() {
-        "metal" => 3500.0,
-        "wood" => 1200.0,
-        "glass" => 4800.0,
-        "stone" => 2200.0,
-        _ => 1500.0,
+    let mut heel_filter = SvfFilter::new(base_f * 1.8, 1.6);
+    let toe_start = ((sr * 0.045) as usize).min(total / 2);
+
+    let (scuff_f, scuff_q) = match params.material_preset.as_str() {
+        "metal" => (3800.0, 3.5),
+        "wood" => (240.0, 2.0), // hollow floorboard box
+        "glass" => (5200.0, 2.5),
+        "stone" => (1800.0, 1.8),
+        _ => (1200.0, 1.5),
     };
-    let mut scuff_filter = SvfFilter::new(scuff_cutoff, 2.0);
-    let impact_len = ((sr * 0.08).round() as usize).min(total);
+    let mut scuff_filter = SvfFilter::new(scuff_f, scuff_q);
 
     for i in 0..total {
         let t = i as f32 / sr;
-        let thud_env = (-t * 35.0).exp();
-        let thud_osc = (2.0 * PI * base_f * (1.0 + (-t * 60.0).exp()) * t).sin();
-        let raw_thud = thud_osc * thud_env;
-        let thud = thud_filter.process_lp(raw_thud, sr);
 
-        let scuff_env = if i < impact_len {
-            (i as f32 / impact_len as f32) * (-t * 18.0).exp()
+        // 1. Heel strike thump
+        let heel_env = (-t * 42.0).exp();
+        let heel_osc = (2.0 * PI * base_f * (1.0 + (-t * 70.0).exp()) * t).sin();
+        let heel_thud = heel_filter.process_lp(heel_osc * heel_env * 1.6 + rng.next_brown() * heel_env * 0.8, sr);
+
+        // 2. Toe scuff & surface friction
+        let toe_sig = if i >= toe_start {
+            let tt = (i - toe_start) as f32 / sr;
+            let toe_env = (-tt * 30.0).exp();
+            let surface_noise = if params.material_preset == "stone" {
+                rng.next_pink() * (1.0 + if rng.next_f32() > 0.85 { 1.5 } else { 0.0 })
+            } else {
+                rng.next_pink()
+            };
+            scuff_filter.process_bp(surface_noise * toe_env * 1.4 * params.noise_mix, sr)
         } else {
-            (-t * 22.0).exp()
+            0.0
         };
-        let raw_scuff = rng.next_bipolar() * scuff_env * params.noise_mix;
-        let scuff = scuff_filter.process_bp(raw_scuff, sr);
 
-        let combined = thud * 1.2 + scuff * 1.5;
+        let combined = heel_thud * 1.3 + toe_sig * 1.4;
         left[i] = combined;
         right[i] = combined;
     }
 }
 
 // -------------------------------------------------------------
-// 6. WHOOSH & SWIPE
+// 6. WHOOSH & AIR SWIPES (Cinematic Doppler Air Slicing)
 // -------------------------------------------------------------
 fn generate_whoosh(
     left: &mut [f32],
@@ -354,29 +472,56 @@ fn generate_whoosh(
     sr: f32,
 ) {
     let total = left.len();
-    let mut filter_l = SvfFilter::new(300.0, 2.5);
-    let mut filter_r = SvfFilter::new(300.0, 2.5);
+    let base_f = params.base_freq.clamp(80.0, 1800.0);
+    let peak_t = 0.45f32;
+    let transition_width = 0.25f32;
+
+    let mut bp_filter_l = SvfFilter::new(base_f, params.resonance.clamp(1.5, 6.0));
+    let mut bp_filter_r = SvfFilter::new(base_f, params.resonance.clamp(1.5, 6.0));
+    let mut sub_filter_l = SvfFilter::new(120.0, 1.2);
+    let mut sub_filter_r = SvfFilter::new(120.0, 1.2);
 
     for i in 0..total {
-        let t_norm = i as f32 / total as f32;
-        let bell = (-( (t_norm - 0.5) * 4.0 ).powi(2)).exp();
+        let t_norm = i as f32 / total as f32; // 0.0 -> 1.0
 
-        let sweep_f = 200.0 + bell * (params.base_freq.clamp(600.0, 4500.0) - 200.0);
-        filter_l.cutoff = sweep_f;
-        filter_r.cutoff = sweep_f * 1.05;
+        // Asymmetric power envelope: builds up swiftly, peaks, dissipates with smooth air trail
+        let dist = (t_norm - peak_t) / transition_width;
+        let env = (-dist * dist * 3.0).exp();
 
-        let noise_in = rng.next_bipolar();
-        let bp_l = filter_l.process_bp(noise_in, sr) * bell * 2.0;
-        let bp_r = filter_r.process_bp(noise_in, sr) * bell * 2.0;
+        // Sub air displacement boom (pitched whoomph 60Hz -> 140Hz -> 45Hz)
+        let sub_pitch = (60.0 + env * 120.0) * (2.0 * PI / sr);
+        let sub_osc = (i as f32 * sub_pitch).sin() * env.powf(1.8) * 0.6;
+        let sub_noise = rng.next_brown() * env.powf(2.0) * 0.4;
+        let sub_sig_l = sub_filter_l.process_lp(sub_osc + sub_noise, sr);
+        let sub_sig_r = sub_filter_r.process_lp(sub_osc + sub_noise, sr);
 
-        let pan = (t_norm * 2.0 - 1.0) * params.stereo_spread;
-        left[i] = bp_l * (1.0 - pan * 0.7);
-        right[i] = bp_r * (1.0 + pan * 0.7);
+        // Doppler frequency sweep for whistling vortex air shear
+        let sweep_factor = 1.0 + (1.0 - (t_norm - peak_t).abs().min(1.0)).powf(2.5) * 3.5;
+        let cur_bp_f = (base_f * sweep_factor).clamp(80.0, sr * 0.45);
+        bp_filter_l.cutoff = cur_bp_f;
+        bp_filter_r.cutoff = cur_bp_f;
+
+        let pink = rng.next_pink();
+        let air_vortex_l = bp_filter_l.process_bp(pink, sr);
+        let air_vortex_r = bp_filter_r.process_bp(pink, sr);
+
+        let high_air = rng.next_bipolar() * env.powf(1.5) * 0.15 * params.brightness;
+
+        // Dynamic stereo Doppler sweep across stereo field (left to right)
+        let pan = (t_norm * 2.0 - 1.0).clamp(-1.0, 1.0) * params.stereo_spread;
+        let gain_l = (1.0 - pan).max(0.0).sqrt();
+        let gain_r = (1.0 + pan).max(0.0).sqrt();
+
+        let sig_l = (sub_sig_l * 0.7 + air_vortex_l * 1.4 + high_air) * env * gain_l;
+        let sig_r = (sub_sig_r * 0.7 + air_vortex_r * 1.4 + high_air) * env * gain_r;
+
+        left[i] = sig_l;
+        right[i] = sig_r;
     }
 }
 
 // -------------------------------------------------------------
-// 7. AMBIENT DRONE & TEXTURE
+// 7. AMBIENT & SCIFI DRONES (Multi-Oscillator Organic Beating)
 // -------------------------------------------------------------
 fn generate_ambient(
     left: &mut [f32],
@@ -387,32 +532,41 @@ fn generate_ambient(
 ) {
     let total = left.len();
     let base_f = params.base_freq.clamp(30.0, 600.0);
-    let mut phase1 = 0.0f32;
-    let mut phase2 = 0.0f32;
-    let mut phase3 = 0.0f32;
-    let detune = 1.004;
+    let mut osc1_phase = 0.0f32;
+    let mut osc2_phase = 0.0f32;
+    let mut osc3_phase = 0.0f32;
 
     for i in 0..total {
         let t = i as f32 / sr;
-        phase1 += (2.0 * PI * base_f) / sr;
-        phase2 += (2.0 * PI * base_f * detune) / sr;
-        phase3 += (2.0 * PI * (base_f * 0.5)) / sr;
+        // Breathing LFO for slow harmonic movement
+        let lfo1 = (2.0 * PI * 0.12 * t).sin() * 0.008;
+        let lfo2 = (2.0 * PI * 0.18 * t).cos() * 0.006;
 
-        let v1 = phase1.sin();
-        let v2 = (phase2.sin() + (phase2 * 2.0).sin() * 0.3) * 0.7;
-        let v3 = phase3.sin() * 0.4;
-        let rumble = rng.next_bipolar() * params.noise_mix * 0.15;
-        let lfo = (2.0 * PI * 0.2 * t).sin() * 0.2;
+        let f1 = base_f * (1.0 + lfo1);
+        let f2 = base_f * 1.5 * (1.0 + lfo2); // Perfect 5th
+        let f3 = base_f * 2.002;              // Detuned Octave
 
-        let sig = (v1 + v2 + v3 + rumble) * (1.0 + lfo);
-        let pan = (2.0 * PI * 0.1 * t).sin() * params.stereo_spread * 0.4;
-        left[i] = sig * (1.0 - pan);
-        right[i] = sig * (1.0 + pan);
+        osc1_phase += (2.0 * PI * f1) / sr;
+        osc2_phase += (2.0 * PI * f2) / sr;
+        osc3_phase += (2.0 * PI * f3) / sr;
+
+        let tone1 = osc1_phase.sin();
+        let tone2 = osc2_phase.sin() * 0.6;
+        let tone3 = osc3_phase.sin() * 0.4;
+
+        let pink = rng.next_pink() * params.noise_mix * 0.35;
+        let combined = tone1 + tone2 + tone3 + pink;
+
+        let pan_l = 1.0 - (2.0 * PI * 0.15 * t).sin() * params.stereo_spread * 0.4;
+        let pan_r = 1.0 + (2.0 * PI * 0.15 * t).sin() * params.stereo_spread * 0.4;
+
+        left[i] = combined * pan_l * 0.7;
+        right[i] = combined * pan_r * 0.7;
     }
 }
 
 // -------------------------------------------------------------
-// 8. EXPLOSION & DETONATION
+// 8. EXPLOSIONS & BLASTS (Cinematic 4-Layer Detonation)
 // -------------------------------------------------------------
 fn generate_explosion(
     left: &mut [f32],
@@ -422,41 +576,50 @@ fn generate_explosion(
     sr: f32,
 ) {
     let total = left.len();
-    let mut lp_sub = SvfFilter::new(90.0, 2.0);
-    let mut lp_body = SvfFilter::new(450.0, 1.2);
     let decay_sec = (params.decay_ms / 1000.0).max(0.2);
+
+    let mut blast_filter = SvfFilter::new(8000.0, 1.8);
+    let mut sub_filter = SvfFilter::new(55.0, 2.5);
 
     for i in 0..total {
         let t = i as f32 / sr;
         let t_norm = (t / decay_sec).clamp(0.0, 1.0);
 
-        // Sub-bass detonation thump (140Hz dropping down to 25Hz)
-        let sub_f = (140.0 * (-t_norm * 12.0).exp()).max(22.0);
-        let sub_env = (-t_norm * 4.0).exp();
-        let sub_raw = (2.0 * PI * sub_f * t).sin() * sub_env;
-        let sub = lp_sub.process_lp(sub_raw, sr) * 1.5;
+        // Layer 1: Instant Shockwave Sub-Punch (45Hz -> 25Hz)
+        let sub_env = (-t * 12.0).exp();
+        let sub_f = 45.0 * (-t * 8.0).exp() + 25.0;
+        let sub_osc = (2.0 * PI * sub_f * t).sin() * sub_env * 1.8;
+        let sub_punch = sub_filter.process_lp(sub_osc, sr);
 
-        // Shockwave noise burst
-        let noise_env = (-t_norm * 2.5).exp();
-        let raw_noise = rng.next_bipolar() * noise_env;
-        let blast = lp_body.process_lp(raw_noise, sr) * 1.4;
+        // Layer 2: Expanding Fireball with dynamic low-pass sweep down (8kHz -> 120Hz)
+        let blast_env = (-t_norm * 2.8).exp();
+        let sweep_cutoff = (8000.0 * (-t_norm * 4.5).exp() + 120.0).min(sr * 0.45);
+        blast_filter.cutoff = sweep_cutoff;
+        let brown_blast = rng.next_brown() * blast_env * 1.6;
+        let pink_blast = rng.next_pink() * blast_env * 0.8;
+        let blast = blast_filter.process_lp(brown_blast + pink_blast, sr);
 
-        // Shrapnel / Debris crackle
-        let crackle = if rng.next_f32() < (0.08 * (1.0 - t_norm)) {
-            rng.next_bipolar() * (1.0 - t_norm) * params.noise_mix * 1.2
+        // Layer 3: Stochastic flying shrapnel & crackle pops
+        let crackle = if t > 0.04 && t < decay_sec * 0.7 {
+            if rng.next_f32() < 0.04 * params.noise_mix {
+                rng.next_bipolar() * (-t * 3.0).exp() * 0.8
+            } else {
+                0.0
+            }
         } else {
             0.0
         };
 
-        let sig = sub + blast + crackle;
-        let pan = (rng.next_bipolar() * 0.2) * params.stereo_spread;
-        left[i] = sig * (1.0 - pan);
-        right[i] = sig * (1.0 + pan);
+        let combined = sub_punch + blast + crackle;
+        let pan = rng.next_bipolar() * params.stereo_spread * 0.15;
+
+        left[i] = combined * (1.0 - pan);
+        right[i] = combined * (1.0 + pan);
     }
 }
 
 // -------------------------------------------------------------
-// 9. WEATHER & NATURE (Rain, Wind, Thunder)
+// 9. WEATHER & NATURE (Stochastic Raindrop Cloud & Wind)
 // -------------------------------------------------------------
 fn generate_weather(
     left: &mut [f32],
@@ -466,42 +629,62 @@ fn generate_weather(
     sr: f32,
 ) {
     let total = left.len();
-    let mut wind_filter_l = SvfFilter::new(400.0, 3.5);
-    let mut wind_filter_r = SvfFilter::new(420.0, 3.5);
-    let mut rain_filter = SvfFilter::new(3200.0, 1.0);
+    let mut wind_filter = SvfFilter::new(350.0, 1.4);
 
+    // Continuous rolling wind bed with pink/brown noise
     for i in 0..total {
         let t = i as f32 / sr;
+        let wind_lfo = (2.0 * PI * 0.25 * t).sin() * 0.4 + 0.6;
+        let wind_cutoff = (200.0 + wind_lfo * 500.0 * params.brightness).min(sr * 0.4);
+        wind_filter.cutoff = wind_cutoff;
 
-        // Howling wind gust LFO
-        let gust_lfo = (2.0 * PI * 0.4 * t).sin() * 0.5 + (2.0 * PI * 0.15 * t).sin() * 0.5;
-        let wind_cutoff = 180.0 + (gust_lfo.abs() * params.base_freq.clamp(300.0, 2500.0));
-        wind_filter_l.cutoff = wind_cutoff;
-        wind_filter_r.cutoff = wind_cutoff * 1.08;
+        let wind_sample = wind_filter.process_lp(rng.next_brown() * 0.6 + rng.next_pink() * 0.4, sr);
+        let pan = (2.0 * PI * 0.15 * t).sin() * params.stereo_spread * 0.3;
 
-        let wind_noise_l = rng.next_bipolar();
-        let wind_noise_r = rng.next_bipolar();
-        let wind_l = wind_filter_l.process_bp(wind_noise_l, sr) * 1.8;
-        let wind_r = wind_filter_r.process_bp(wind_noise_r, sr) * 1.8;
+        left[i] = wind_sample * (1.0 - pan) * 0.4;
+        right[i] = wind_sample * (1.0 + pan) * 0.4;
+    }
 
-        // Rain droplet bed
-        let rain_noise = rng.next_bipolar() * 0.3;
-        let rain_bed = rain_filter.process_hp(rain_noise, sr) * params.noise_mix;
+    // Discrete raindrops generation (stochastic Poisson process)
+    let drop_rate = (params.noise_mix * 350.0).max(40.0);
+    let prob_per_sample = drop_rate / sr;
 
-        // Micro-droplet tap impulses
-        let droplet = if rng.next_f32() < 0.04 {
-            rng.next_bipolar() * 0.6 * params.brightness
-        } else {
-            0.0
-        };
+    for i in 0..total {
+        if rng.next_f32() < prob_per_sample {
+            let drop_freq = 1500.0 + rng.next_f32() * 2800.0;
+            let drop_len = ((sr * (0.003 + rng.next_f32() * 0.008)) as usize).min(total - i);
+            let drop_amp = (0.2 + rng.next_f32() * 0.8) * params.brightness;
+            let drop_pan = rng.next_bipolar() * params.stereo_spread;
 
-        left[i] = wind_l + rain_bed + droplet;
-        right[i] = wind_r + rain_bed + droplet;
+            for d in 0..drop_len {
+                let dt = d as f32 / sr;
+                let drop_env = (-dt * 450.0).exp();
+                let chirp_f = drop_freq * (1.0 + (-dt * 300.0).exp() * 0.3);
+                let drop_sig = (2.0 * PI * chirp_f * dt).sin() * drop_env * drop_amp;
+
+                left[i + d] += drop_sig * (1.0 - drop_pan * 0.7);
+                right[i + d] += drop_sig * (1.0 + drop_pan * 0.7);
+            }
+        }
+    }
+
+    // Optional rolling thunder shockwave if base_freq is low and damping is high
+    if params.base_freq < 120.0 {
+        let thunder_start = (sr * 0.3) as usize;
+        let mut thunder_filter = SvfFilter::new(65.0, 2.5);
+        for i in thunder_start..total {
+            let t = (i - thunder_start) as f32 / sr;
+            let thunder_env = (-t * 0.8).exp() * (1.0 - (-t * 6.0).exp());
+            let raw_thunder = rng.next_brown() * thunder_env * 1.5;
+            let th = thunder_filter.process_lp(raw_thunder, sr);
+            left[i] += th;
+            right[i] += th;
+        }
     }
 }
 
 // -------------------------------------------------------------
-// 10. RETRO & CHIPTUNE (NES / GameBoy 8-Bit)
+// 10. RETRO & CHIPTUNE (NES / GameBoy 8-Bit Emulation)
 // -------------------------------------------------------------
 fn generate_retro(
     left: &mut [f32],
@@ -526,7 +709,6 @@ fn generate_retro(
         let t = i as f32 / sr;
         let t_norm = (t / decay_sec).clamp(0.0, 1.0);
 
-        // Rapid 60Hz retro arpeggio step
         let arp_idx = ((t * 24.0) as usize) % arpeggio_steps.len();
         let arp_mult = if params.pitch_decay > 0.3 {
             arpeggio_steps[arp_idx]
@@ -534,7 +716,6 @@ fn generate_retro(
             1.0
         };
 
-        // Pitch slide
         let pitch_slide = (-t_norm * params.pitch_decay * 6.0).exp();
         let cur_f = (base_f * arp_mult * pitch_slide).clamp(30.0, 8000.0);
 
@@ -543,14 +724,10 @@ fn generate_retro(
             phase -= 2.0 * PI;
         }
 
-        // Pulse wave with variable duty cycle
         let pulse: f32 = if (phase / (2.0 * PI)) < duty_cycle { 0.7 } else { -0.7 };
-
-        // 4-bit Lo-fi quantization
         let levels: f32 = 8.0;
         let lo_fi_pulse = (pulse * levels).round() / levels;
 
-        // Retro noise burst at onset
         let retro_noise = if i < 300 {
             let n = if rng.next_f32() > 0.5 { 0.5 } else { -0.5 };
             n * params.noise_mix
@@ -573,14 +750,11 @@ fn generate_magic(
     left: &mut [f32],
     right: &mut [f32],
     params: &SynthParams,
-    rng: &mut FastRng,
+    _rng: &mut FastRng,
     sr: f32,
 ) {
     let total = left.len();
     let base_f = params.base_freq.clamp(200.0, 3500.0);
-    let decay_sec = (params.decay_ms / 1000.0).max(0.2);
-
-    // Pentatonic crystal harmonic ratios
     let bell_ratios = [1.0, 1.5, 2.0, 2.667, 3.2, 4.0];
 
     for (idx, &ratio) in bell_ratios.iter().enumerate() {
@@ -590,7 +764,6 @@ fn generate_magic(
 
         for i in 0..total {
             let t = i as f32 / sr;
-            // Shimmer vibrato LFO
             let shimmer = (2.0 * PI * 6.5 * t).sin() * 0.015 * params.brightness;
             let phase = 2.0 * PI * f * (1.0 + shimmer) * t;
             let env = (-t * damp).exp();
@@ -600,22 +773,10 @@ fn generate_magic(
             right[i] += sig * (1.0 + pan * 0.6);
         }
     }
-
-    // Celestial sparkle bursts
-    for i in 0..total {
-        let t = i as f32 / sr;
-        let t_norm = (t / decay_sec).clamp(0.0, 1.0);
-        if rng.next_f32() < (0.05 * (1.0 - t_norm)) {
-            let sparkle_f = (base_f * (3.0 + rng.next_f32() * 5.0)).min(sr * 0.48);
-            let sparkle = (2.0 * PI * sparkle_f * t).sin() * 0.3 * params.brightness * (1.0 - t_norm);
-            left[i] += sparkle;
-            right[i] += sparkle;
-        }
-    }
 }
 
 // -------------------------------------------------------------
-// 12. TACTICAL WEAPON & BALLISTICS
+// 12. WEAPONS & BLASTERS (Supersonic Crack & Combustion)
 // -------------------------------------------------------------
 fn generate_weapon(
     left: &mut [f32],
@@ -625,42 +786,45 @@ fn generate_weapon(
     sr: f32,
 ) {
     let total = left.len();
-    let mut lp_chamber = SvfFilter::new(120.0, 1.8);
-    let mut bp_crack = SvfFilter::new(2800.0, 3.0);
-    let decay_sec = (params.decay_ms / 1000.0).max(0.15);
+    let decay_sec = (params.decay_ms / 1000.0).max(0.1);
 
-    // Initial supersonic bullet crack (<6ms)
-    let crack_samples = ((sr * 0.006) as usize).min(total);
-    for i in 0..crack_samples {
-        let raw = rng.next_bipolar() * 2.0;
-        let crack = bp_crack.process_bp(raw, sr);
-        left[i] += crack;
-        right[i] += crack;
-    }
+    let mut muzzle_filter = SvfFilter::new(3500.0, 1.8);
+    let mut crack_filter = SvfFilter::new(6500.0, 2.0);
+    let bolt_time = (sr * 0.038) as usize;
 
-    // Chamber powder detonation & low-end thump
     for i in 0..total {
         let t = i as f32 / sr;
         let t_norm = (t / decay_sec).clamp(0.0, 1.0);
 
-        let powder_env = (-t_norm * 8.0).exp();
-        let f_thump = 130.0 * (-t_norm * 20.0).exp();
-        let thump = (2.0 * PI * f_thump * t).sin() * powder_env;
-        let low_end = lp_chamber.process_lp(thump, sr) * 1.8;
+        // 1. Supersonic crack transient
+        let crack_env = if i < 110 { (-t * 1500.0).exp() } else { 0.0 };
+        let crack = crack_filter.process_hp(rng.next_bipolar() * crack_env * 2.2, sr);
 
-        // Mechanical bolt slide metallic ring
-        let bolt_f = params.base_freq.clamp(800.0, 4000.0);
-        let bolt_env = (-t * 30.0).exp() * params.brightness;
-        let bolt = (2.0 * PI * bolt_f * t).sin() * bolt_env * 0.4;
+        // 2. Muzzle punch & combustion
+        let muzzle_env = (-t * 28.0).exp();
+        let muzzle_f = params.base_freq * (-t * 40.0).exp() + 45.0;
+        let muzzle_osc = (2.0 * PI * muzzle_f * t).sin() * muzzle_env * 1.5;
+        let muzzle_noise = rng.next_brown() * muzzle_env * 1.8;
+        let muzzle = muzzle_filter.process_lp(muzzle_osc + muzzle_noise, sr);
 
-        let sig = low_end + bolt;
-        left[i] += sig;
-        right[i] += sig;
+        // 3. Mechanical bolt cycle transient
+        let bolt = if i >= bolt_time && i < bolt_time + 150 {
+            let bt = (i - bolt_time) as f32 / sr;
+            rng.next_bipolar() * (-bt * 800.0).exp() * 0.6 * params.damping
+        } else {
+            0.0
+        };
+
+        let tail = rng.next_pink() * (-t_norm * 4.0).exp() * 0.35;
+        let combined = crack * 1.6 + muzzle * 1.4 + bolt + tail;
+
+        left[i] = combined;
+        right[i] = combined;
     }
 }
 
 // -------------------------------------------------------------
-// 13. CREATURE & MONSTER VOCALIZATION
+// 13. CREATURES & MONSTERS (Formant Vocal Tract Throat)
 // -------------------------------------------------------------
 fn generate_creature(
     left: &mut [f32],
@@ -671,48 +835,36 @@ fn generate_creature(
 ) {
     let total = left.len();
     let base_f = params.base_freq.clamp(35.0, 450.0);
-    let decay_sec = (params.duration_ms / 1000.0).max(0.2);
 
-    // Formant vocal filters (F1 & F2 vowel formant frequencies)
-    let (f1, f2) = match params.material_preset.as_str() {
-        "wood" => (300.0, 870.0),   // /u/ Deep guttural roar
-        "glass" => (850.0, 1610.0), // /a/ Screaming screech
-        "stone" => (500.0, 1500.0), // /o/ Ominous howl
-        _ => (400.0, 1200.0),       // Guttural beast
-    };
-
-    let mut formant1 = SvfFilter::new(f1, 4.0);
-    let mut formant2 = SvfFilter::new(f2, 4.0);
+    let mut f1 = SvfFilter::new(450.0, 4.5);
+    let mut f2 = SvfFilter::new(1250.0, 3.5);
+    let mut f3 = SvfFilter::new(2600.0, 2.5);
 
     let mut phase = 0.0f32;
 
     for i in 0..total {
         let t = i as f32 / sr;
-        let t_norm = (t / decay_sec).clamp(0.0, 1.0);
-
-        // Throat flutter & pitch vibrato
-        let flutter = (2.0 * PI * 18.0 * t).sin() * params.jitter_amount * 0.25;
-        let cur_f = (base_f * (1.0 + flutter)).clamp(20.0, 1200.0);
+        let roar_growl = (2.0 * PI * 35.0 * t).sin() * 0.25 * params.jitter_amount;
+        let cur_f = (base_f * (1.0 + roar_growl)).clamp(20.0, 800.0);
 
         phase += (2.0 * PI * cur_f) / sr;
         if phase > 2.0 * PI {
             phase -= 2.0 * PI;
         }
 
-        // Vocal cord sawtooth pulse
-        let saw = (phase / PI) - 1.0;
-        let throat_noise = rng.next_bipolar() * params.noise_mix * 0.4;
-        let vocal_source = saw + throat_noise;
+        // Sawtooth glottal pulse
+        let glottal = (phase / PI - 1.0) * 0.7;
+        let noise_breath = rng.next_pink() * params.noise_mix * 0.4;
+        let raw_vocal = glottal + noise_breath;
 
-        // Formant filtering
-        let v1 = formant1.process_bp(vocal_source, sr);
-        let v2 = formant2.process_bp(vocal_source, sr) * 0.7;
+        let v1 = f1.process_bp(raw_vocal, sr);
+        let v2 = f2.process_bp(raw_vocal, sr);
+        let v3 = f3.process_bp(raw_vocal, sr);
 
-        let env = (-( (t_norm - 0.4) * 3.0 ).powi(2)).exp(); // Vocal swell
-        let sig = (v1 + v2) * env * 1.6;
+        let combined = v1 * 1.2 + v2 * 0.8 + v3 * 0.4;
+        let env = (-t * (params.damping * 2.0 + 0.5)).exp();
 
-        let pan = (2.0 * PI * 0.5 * t).sin() * params.stereo_spread * 0.3;
-        left[i] = sig * (1.0 - pan);
-        right[i] = sig * (1.0 + pan);
+        left[i] = combined * env;
+        right[i] = combined * env;
     }
 }

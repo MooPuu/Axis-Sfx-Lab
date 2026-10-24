@@ -72,39 +72,31 @@ export const AppSidebar: React.FC<AppSidebarProps> = ({
       className={`relative flex flex-col border-r transition-all duration-300 z-30 select-none shrink-0 ${
         theme === "dark"
           ? "bg-neutral-900/90 border-neutral-800 text-neutral-200"
-          : "bg-slate-100/90 border-slate-300 text-slate-800"
+          : "bg-slate-50/95 border-slate-200 text-slate-900"
       } ${isCollapsed ? "w-16" : "w-64"}`}
     >
       {/* Sidebar Header */}
-      <div className="h-16 px-4 flex items-center justify-between border-b border-inherit">
+      <div className={`h-14 px-4 flex items-center justify-between border-b ${
+        theme === "dark" ? "border-neutral-800" : "border-slate-200"
+      }`}>
         {!isCollapsed && (
-          <div className="flex items-center space-x-2.5 overflow-hidden">
-            <img
-              src="/app-icon.png"
-              alt="Axis SFX Lab"
-              className="w-8 h-8 rounded-full object-contain shrink-0 shadow-sm border border-neutral-700/60"
-            />
-            <div className="truncate">
-              <div className="text-xs font-bold tracking-tight truncate text-neutral-100">Axis SFX Lab</div>
-              <div className="text-[10px] text-neutral-400 truncate">Mahdi Kareem © 2026</div>
-            </div>
-          </div>
-        )}
-
-        {isCollapsed && (
-          <div className="mx-auto">
-            <img
-              src="/app-icon.png"
-              alt="Axis SFX Lab"
-              className="w-7 h-7 rounded-full object-contain shadow-sm border border-neutral-700/60"
-            />
+          <div className="flex items-center space-x-2">
+            <span className={`text-[11px] font-bold tracking-wider uppercase ${
+              theme === "dark" ? "text-neutral-300" : "text-slate-700"
+            }`}>
+              Sound Library
+            </span>
           </div>
         )}
 
         <button
           onClick={onToggleCollapse}
           title={isCollapsed ? "Expand Sidebar" : "Collapse Sidebar"}
-          className="p-1.5 rounded-lg hover:bg-neutral-800/50 text-neutral-400 hover:text-neutral-200 transition-colors cursor-pointer"
+          className={`p-1.5 rounded-lg transition-colors cursor-pointer ${isCollapsed ? "mx-auto" : ""} ${
+            theme === "dark"
+              ? "hover:bg-neutral-800 text-neutral-400 hover:text-neutral-200"
+              : "hover:bg-slate-200 text-slate-600 hover:text-slate-900"
+          }`}
         >
           <svg
             className={`w-4 h-4 transition-transform duration-200 ${isCollapsed ? "rotate-180" : ""}`}
@@ -125,7 +117,9 @@ export const AppSidebar: React.FC<AppSidebarProps> = ({
         {/* Categories Section */}
         <div>
           {!isCollapsed && (
-            <div className="px-2 pb-1.5 text-[10px] font-semibold uppercase tracking-wider text-neutral-400">
+            <div className={`px-2 pb-1.5 text-[10px] font-semibold uppercase tracking-wider ${
+              theme === "dark" ? "text-neutral-400" : "text-slate-500"
+            }`}>
               Synthesizer Engines
             </div>
           )}
@@ -140,11 +134,15 @@ export const AppSidebar: React.FC<AppSidebarProps> = ({
                   title={c.name}
                   className={`w-full flex items-center space-x-3 px-2.5 py-2 rounded-xl text-xs font-medium transition-all cursor-pointer ${
                     active
-                      ? "bg-neutral-800/90 text-white shadow-sm border border-neutral-700/60"
-                      : "text-neutral-400 hover:text-neutral-200 hover:bg-neutral-800/40"
+                      ? theme === "dark"
+                        ? "bg-neutral-800/90 text-white shadow-sm border border-neutral-700/60"
+                        : "bg-white text-slate-900 shadow-sm border border-slate-300 font-semibold"
+                      : theme === "dark"
+                        ? "text-neutral-400 hover:text-neutral-200 hover:bg-neutral-800/40"
+                        : "text-slate-600 hover:text-slate-900 hover:bg-slate-200/70"
                   } ${isCollapsed ? "justify-center px-0" : ""}`}
                 >
-                  <Icon size={16} className={active ? c.color : "text-neutral-400"} />
+                  <Icon size={16} className={active ? c.color : theme === "dark" ? "text-neutral-400" : "text-slate-500"} />
                   {!isCollapsed && <span className="truncate">{c.name}</span>}
                 </button>
               );
@@ -156,10 +154,16 @@ export const AppSidebar: React.FC<AppSidebarProps> = ({
         {!isCollapsed && (
           <div className="space-y-2 pt-2 border-t border-inherit">
             <div className="flex items-center justify-between px-2">
-              <span className="text-[10px] font-semibold uppercase tracking-wider text-neutral-400">
+              <span className={`text-[10px] font-semibold uppercase tracking-wider ${
+                theme === "dark" ? "text-neutral-400" : "text-slate-500"
+              }`}>
                 Preset Vault
               </span>
-              <span className="text-[10px] font-mono text-cyan-400 bg-cyan-950/40 px-1.5 py-0.5 rounded border border-cyan-800/40">
+              <span className={`text-[10px] font-mono px-1.5 py-0.5 rounded border ${
+                theme === "dark"
+                  ? "text-cyan-400 bg-cyan-950/40 border-cyan-800/40"
+                  : "text-sky-700 bg-sky-100 border-sky-300 font-semibold"
+              }`}>
                 {filteredPresets.length}
               </span>
             </div>
@@ -171,7 +175,11 @@ export const AppSidebar: React.FC<AppSidebarProps> = ({
                 placeholder="Search presets..."
                 value={searchTerm}
                 onChange={(e) => setSearchTerm(e.target.value)}
-                className="w-full px-2.5 py-1.5 rounded-lg text-xs bg-neutral-950/60 border border-neutral-800/80 text-neutral-200 placeholder:text-neutral-500 focus:outline-none focus:border-cyan-500/60"
+                className={`w-full px-2.5 py-1.5 rounded-lg text-xs transition-colors focus:outline-none ${
+                  theme === "dark"
+                    ? "bg-neutral-950/60 border border-neutral-800/80 text-neutral-200 placeholder:text-neutral-500 focus:border-cyan-500/60"
+                    : "bg-white border border-slate-300 text-slate-900 placeholder:text-slate-400 focus:border-sky-500 shadow-xs"
+                }`}
               />
             </div>
 
@@ -182,12 +190,16 @@ export const AppSidebar: React.FC<AppSidebarProps> = ({
                   onClick={() => onSelectPreset(p.id)}
                   className={`w-full text-left px-2.5 py-1.5 rounded-lg text-xs truncate transition-all cursor-pointer flex items-center justify-between ${
                     selectedPresetId === p.id
-                      ? "bg-cyan-500/20 text-cyan-300 font-medium border border-cyan-500/40"
-                      : "text-neutral-400 hover:text-neutral-200 hover:bg-neutral-800/40"
+                      ? theme === "dark"
+                        ? "bg-cyan-500/20 text-cyan-300 font-medium border border-cyan-500/40"
+                        : "bg-sky-100 text-sky-800 font-semibold border border-sky-400 shadow-xs"
+                      : theme === "dark"
+                        ? "text-neutral-400 hover:text-neutral-200 hover:bg-neutral-800/40"
+                        : "text-slate-600 hover:text-slate-900 hover:bg-slate-200/60"
                   }`}
                 >
                   <span className="truncate">{p.name}</span>
-                  <span className="text-[9px] font-mono opacity-50 uppercase shrink-0 ml-1">
+                  <span className="text-[9px] font-mono opacity-60 uppercase shrink-0 ml-1">
                     {p.category}
                   </span>
                 </button>
@@ -199,7 +211,9 @@ export const AppSidebar: React.FC<AppSidebarProps> = ({
         {/* Quick Tools */}
         <div className="pt-2 border-t border-inherit space-y-1">
           {!isCollapsed && (
-            <div className="px-2 pb-1.5 text-[10px] font-semibold uppercase tracking-wider text-neutral-400">
+            <div className={`px-2 pb-1.5 text-[10px] font-semibold uppercase tracking-wider ${
+              theme === "dark" ? "text-neutral-400" : "text-slate-500"
+            }`}>
               Workstation Tools
             </div>
           )}
@@ -207,22 +221,26 @@ export const AppSidebar: React.FC<AppSidebarProps> = ({
           <button
             onClick={onOpenBatch}
             title="Batch Variation Bank"
-            className={`w-full flex items-center space-x-3 px-2.5 py-2 rounded-xl text-xs font-medium text-neutral-300 hover:bg-indigo-950/40 hover:text-indigo-200 transition-all cursor-pointer ${
-              isCollapsed ? "justify-center px-0" : ""
-            }`}
+            className={`w-full flex items-center space-x-3 px-2.5 py-2 rounded-xl text-xs font-medium transition-all cursor-pointer ${
+              theme === "dark"
+                ? "text-neutral-300 hover:bg-indigo-950/40 hover:text-indigo-200"
+                : "text-slate-700 hover:bg-indigo-50 hover:text-indigo-900 border border-slate-200/80"
+            } ${isCollapsed ? "justify-center px-0" : ""}`}
           >
-            <IconLayers size={16} className="text-indigo-400" />
+            <IconLayers size={16} className={theme === "dark" ? "text-indigo-400" : "text-indigo-600"} />
             {!isCollapsed && <span>Batch Variations</span>}
           </button>
 
           <button
             onClick={onOpenExport}
             title="Game Engine Export"
-            className={`w-full flex items-center space-x-3 px-2.5 py-2 rounded-xl text-xs font-medium text-neutral-300 hover:bg-teal-950/40 hover:text-teal-200 transition-all cursor-pointer ${
-              isCollapsed ? "justify-center px-0" : ""
-            }`}
+            className={`w-full flex items-center space-x-3 px-2.5 py-2 rounded-xl text-xs font-medium transition-all cursor-pointer ${
+              theme === "dark"
+                ? "text-neutral-300 hover:bg-teal-950/40 hover:text-teal-200"
+                : "text-slate-700 hover:bg-teal-50 hover:text-teal-900 border border-slate-200/80"
+            } ${isCollapsed ? "justify-center px-0" : ""}`}
           >
-            <IconDownload size={16} className="text-teal-400" />
+            <IconDownload size={16} className={theme === "dark" ? "text-teal-400" : "text-teal-600"} />
             {!isCollapsed && <span>Game Export Hub</span>}
           </button>
         </div>
@@ -230,14 +248,16 @@ export const AppSidebar: React.FC<AppSidebarProps> = ({
 
       {/* Sidebar Footer */}
       <div className="p-3 border-t border-inherit">
-        <div className={`flex items-center ${isCollapsed ? "justify-center" : "justify-between"} text-xs text-neutral-400`}>
+        <div className={`flex items-center ${isCollapsed ? "justify-center" : "justify-between"} text-xs ${
+          theme === "dark" ? "text-neutral-400" : "text-slate-600"
+        }`}>
           {!isCollapsed && (
             <div className="flex items-center space-x-2">
-              <span className="w-2 h-2 rounded-full bg-emerald-400 animate-pulse" />
-              <span className="text-[11px] font-mono">DSP Engine Active</span>
+              <span className="w-2 h-2 rounded-full bg-emerald-500 animate-pulse" />
+              <span className="text-[11px] font-mono font-medium">DSP Engine Active</span>
             </div>
           )}
-          <IconSettings size={16} className="text-neutral-500" />
+          <IconSettings size={16} className={theme === "dark" ? "text-neutral-500" : "text-slate-500"} />
         </div>
       </div>
     </aside>

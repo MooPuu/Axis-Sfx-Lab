@@ -367,8 +367,18 @@ export default function App() {
     <div className="h-screen max-h-screen w-screen overflow-hidden flex flex-col font-sans select-none bg-neutral-950 text-neutral-100">
       {/* Top Application Header (Clean minimal, menubar removed) */}
       <header className="h-14 px-4 sm:px-5 bg-neutral-900/90 border-b border-neutral-800/80 backdrop-blur-md flex items-center justify-between shrink-0 z-40 relative">
-        {/* Left spacer - icon and name removed per user request */}
-        <div className="w-8 shrink-0" />
+        {/* Top-Left: Logo & Branding moved here with logo-equalizer.png */}
+        <div className="flex items-center space-x-2.5 shrink-0 select-none">
+          <img
+            src="/logo-equalizer.png"
+            alt="Axis SFX Lab Logo"
+            className="h-7 w-auto object-contain rounded-md shadow-sm"
+          />
+          <div className="flex flex-col justify-center">
+            <span className="text-xs font-bold tracking-tight text-neutral-100 leading-none">Axis SFX Lab</span>
+            <span className="text-[10px] text-neutral-400 font-medium leading-tight mt-0.5">Mahdi Kareem © 2026</span>
+          </div>
+        </div>
 
         {/* Center: Axis Tools Official Logo */}
         <div className="absolute left-1/2 -translate-x-1/2 flex items-center justify-center pointer-events-none">
