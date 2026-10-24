@@ -58,6 +58,14 @@ Generate game-ready sound effects purely from mathematical and physical models�
 
 ---
 
+## 📦 Release Packages & Installers
+Pre-compiled release binaries are organized in [`dist-releases/`](file:///c:/Users/pc/Documents/Open%20Code%20Projects/Axis%20SFX%20Lab/dist-releases):
+- **NSIS Installer:** `Axis SFX Lab_1.0.0_NSIS_Setup.exe` (1.43 MB)
+- **Windows Installer (MSI):** `Axis SFX Lab_1.0.0_Installer.msi` (2.08 MB)
+- **Portable Executable:** `Axis SFX Lab_1.0.0_Portable.exe` (4.29 MB — zero install, run directly)
+
+---
+
 ## 🛠️ Development & Building
 
 ### Prerequisites
