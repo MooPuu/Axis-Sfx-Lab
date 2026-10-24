@@ -54,6 +54,29 @@ export interface PresetInfo {
   params: SynthParams;
 }
 
+export interface CustomExportConfig {
+  format: string; // "wav16" | "wav24" | "wav32" | "cheader" | "godot_bundle" | "stems"
+  bit_depth: number;
+  is_mono: boolean;
+  target_sample_rate: number;
+  normalize_peak: boolean;
+  base_name: string;
+}
+
+export interface CustomExportResult {
+  main_filename: string;
+  main_base64: string;
+  mime_type: string;
+  c_header_text?: string;
+  godot_import_text?: string;
+  stem_intro_base64?: string;
+  stem_intro_name?: string;
+  stem_loop_base64?: string;
+  stem_loop_name?: string;
+  stem_tail_base64?: string;
+  stem_tail_name?: string;
+}
+
 class AudioPlayerEngine {
   private ctx: AudioContext | null = null;
   private masterGain: GainNode | null = null;
@@ -98,7 +121,8 @@ class AudioPlayerEngine {
     for (let i = 0; i < len; i++) {
       bytes[i] = binary.charCodeAt(i);
     }
-    const decoded = await this.ctx!.decodeAudioData(bytes.buffer);
+
+    const decoded = await this.ctx!.decodeAudioData(bytes.buffer.slice(0));
     if (isSeam) {
       this.seamBuffer = decoded;
     } else {
@@ -108,20 +132,21 @@ class AudioPlayerEngine {
   }
 
   public play(loop: boolean = false, onEnded?: () => void, offsetSeconds: number = 0) {
-    if (!this.ctx || !this.audioBuffer || !this.masterGain) return;
+    if (!this.audioBuffer) return;
+    this.initCtx();
     this.stop();
 
     this.isLooping = loop;
-    this.isPlaying = true;
     this.onEndedCallback = onEnded || null;
 
-    const source = this.ctx.createBufferSource();
+    const source = this.ctx!.createBufferSource();
     source.buffer = this.audioBuffer;
     source.loop = loop;
-    source.connect(this.masterGain);
+    source.connect(this.masterGain!);
 
-    const safeOffset = Math.max(0, Math.min(offsetSeconds, this.audioBuffer.duration - 0.01));
-    this.startTime = this.ctx.currentTime - safeOffset;
+    this.currentSource = source;
+    this.startTime = this.ctx!.currentTime - offsetSeconds;
+    this.isPlaying = true;
 
     source.onended = () => {
       if (!this.isLooping) {
@@ -132,33 +157,43 @@ class AudioPlayerEngine {
       }
     };
 
-    source.start(0, safeOffset);
-    this.currentSource = source;
+    source.start(0, offsetSeconds);
   }
 
-  public seek(progressRatio: number) {
-    if (!this.audioBuffer) return;
-    const offset = progressRatio * this.audioBuffer.duration;
+  public seek(ratio: number) {
+    if (!this.audioBuffer || !this.ctx) return;
+    const dur = this.audioBuffer.duration;
+    const offset = Math.max(0, Math.min(dur, ratio * dur));
     if (this.isPlaying) {
       this.play(this.isLooping, this.onEndedCallback || undefined, offset);
     }
   }
 
   public playSeam(onEnded?: () => void) {
-    if (!this.ctx || !this.seamBuffer || !this.masterGain) return;
+    if (!this.seamBuffer) return;
+    this.initCtx();
     this.stop();
 
-    this.isPlaying = true;
-    const source = this.ctx.createBufferSource();
+    this.isLooping = false;
+    this.onEndedCallback = onEnded || null;
+
+    const source = this.ctx!.createBufferSource();
     source.buffer = this.seamBuffer;
-    source.loop = true; // Loop the seam for auditioning
-    source.connect(this.masterGain);
+    source.loop = false;
+    source.connect(this.masterGain!);
+
+    this.currentSource = source;
+    this.startTime = this.ctx!.currentTime;
+    this.isPlaying = true;
+
+    source.onended = () => {
+      this.isPlaying = false;
+      if (this.onEndedCallback) {
+        this.onEndedCallback();
+      }
+    };
 
     source.start(0);
-    this.currentSource = source;
-    if (onEnded) {
-      source.onended = onEnded;
-    }
   }
 
   public stop() {
@@ -167,7 +202,7 @@ class AudioPlayerEngine {
         this.currentSource.stop();
         this.currentSource.disconnect();
       } catch {
-        // Source might already have ended
+        // already stopped
       }
       this.currentSource = null;
     }
@@ -175,16 +210,14 @@ class AudioPlayerEngine {
   }
 
   public getPlaybackProgress(): number {
-    if (!this.isPlaying || !this.ctx || !this.audioBuffer) return 0;
+    if (!this.isPlaying || !this.audioBuffer || !this.ctx) return 0;
     const elapsed = this.ctx.currentTime - this.startTime;
     const dur = this.audioBuffer.duration;
     if (dur <= 0) return 0;
-    return this.isLooping ? (elapsed % dur) / dur : Math.min(elapsed / dur, 1.0);
-  }
-
-  public getCurrentTime(): number {
-    if (!this.audioBuffer) return 0;
-    return this.getPlaybackProgress() * this.audioBuffer.duration;
+    if (this.isLooping) {
+      return (elapsed % dur) / dur;
+    }
+    return Math.min(1, elapsed / dur);
   }
 
   public getDuration(): number {
@@ -222,6 +255,18 @@ export async function apiBatchVariations(
   });
 }
 
+export async function apiExportCustom(
+  params: SynthParams,
+  loopSettings: LoopSettings,
+  config: CustomExportConfig
+): Promise<CustomExportResult> {
+  return await invoke<CustomExportResult>("cmd_export_custom", {
+    params,
+    loopSettings,
+    config,
+  });
+}
+
 export async function apiGetFactoryPresets(): Promise<PresetInfo[]> {
   try {
     return await invoke<PresetInfo[]>("cmd_get_factory_presets");
@@ -236,11 +281,23 @@ export async function apiExportWav(filePath: string, wavBase64: string): Promise
 }
 
 // Download helper for web/tauri
-export function triggerBrowserDownload(base64: string, filename: string) {
+export function triggerBrowserDownload(base64: string, filename: string, mimeType: string = "audio/wav") {
   const link = document.createElement("a");
-  link.href = `data:audio/wav;base64,${base64}`;
+  link.href = `data:${mimeType};base64,${base64}`;
   link.download = filename;
   document.body.appendChild(link);
   link.click();
   document.body.removeChild(link);
+}
+
+export function triggerTextDownload(text: string, filename: string) {
+  const blob = new Blob([text], { type: "text/plain;charset=utf-8" });
+  const url = URL.createObjectURL(blob);
+  const link = document.createElement("a");
+  link.href = url;
+  link.download = filename;
+  document.body.appendChild(link);
+  link.click();
+  document.body.removeChild(link);
+  URL.revokeObjectURL(url);
 }

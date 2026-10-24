@@ -8,6 +8,12 @@ import {
   IconFootstep,
   IconWhoosh,
   IconAmbient,
+  IconExplosion,
+  IconWeather,
+  IconRetro,
+  IconMagic,
+  IconWeapon,
+  IconCreature,
   IconSliders,
   IconSparkles,
 } from "./icons/DuotoneIcons";
@@ -39,11 +45,17 @@ export const ParametricSynthRack: React.FC<ParametricSynthRackProps> = ({
   const categories = [
     { id: "impact", name: "Impacts", icon: IconImpact, color: "text-rose-400" },
     { id: "motor", name: "Motors", icon: IconMotor, color: "text-amber-400" },
-    { id: "ui", name: "UI & Clicks", icon: IconUI, color: "text-sky-400" },
-    { id: "scifi", name: "Sci-Fi Energy", icon: IconSciFi, color: "text-fuchsia-400" },
-    { id: "footstep", name: "Foley Steps", icon: IconFootstep, color: "text-emerald-400" },
-    { id: "whoosh", name: "Whooshes", icon: IconWhoosh, color: "text-cyan-400" },
-    { id: "ambient", name: "Ambient Drone", icon: IconAmbient, color: "text-violet-400" },
+    { id: "ui", name: "UI", icon: IconUI, color: "text-sky-400" },
+    { id: "scifi", name: "Sci-Fi", icon: IconSciFi, color: "text-fuchsia-400" },
+    { id: "footstep", name: "Steps", icon: IconFootstep, color: "text-emerald-400" },
+    { id: "whoosh", name: "Whoosh", icon: IconWhoosh, color: "text-cyan-400" },
+    { id: "ambient", name: "Ambient", icon: IconAmbient, color: "text-violet-400" },
+    { id: "explosion", name: "Explosion", icon: IconExplosion, color: "text-orange-400" },
+    { id: "weather", name: "Weather", icon: IconWeather, color: "text-sky-400" },
+    { id: "retro", name: "Retro", icon: IconRetro, color: "text-lime-400" },
+    { id: "magic", name: "Magic", icon: IconMagic, color: "text-fuchsia-400" },
+    { id: "weapon", name: "Weapon", icon: IconWeapon, color: "text-red-400" },
+    { id: "creature", name: "Creature", icon: IconCreature, color: "text-emerald-400" },
   ];
 
   const materials = [
@@ -54,6 +66,12 @@ export const ParametricSynthRack: React.FC<ParametricSynthRackProps> = ({
     { id: "flesh", name: "Organic & Flesh" },
   ];
 
+  const retroWaveforms = [
+    { id: "wood", name: "12.5% NES Pulse" },
+    { id: "glass", name: "25% NES Square" },
+    { id: "metal", name: "50% Classic Square" },
+  ];
+
   return (
     <div className="flex flex-col bg-neutral-900/90 rounded-2xl border border-neutral-800 p-3.5 sm:p-5 shadow-xl backdrop-blur-md space-y-4 min-w-0 w-full">
       {/* Category Navigation & Select Header */}
@@ -61,12 +79,12 @@ export const ParametricSynthRack: React.FC<ParametricSynthRackProps> = ({
         <div className="flex flex-wrap items-center justify-between gap-2 min-w-0">
           <div className="flex items-center space-x-2 text-xs font-semibold text-neutral-300 shrink-0">
             <IconSliders size={18} className="text-blue-400" />
-            <span>Procedural Sound Generator</span>
+            <span>Procedural Sound Generator (13 Engines)</span>
           </div>
 
           <div className="flex items-center space-x-2 shrink-0">
             {/* Category Select */}
-            <div className="w-32 sm:w-36">
+            <div className="w-36 sm:w-44">
               <Select
                 value={params.category}
                 onValueChange={(val) => updateField("category", val)}
@@ -103,7 +121,7 @@ export const ParametricSynthRack: React.FC<ParametricSynthRackProps> = ({
         </div>
 
         {/* Category Selector Tabs */}
-        <div className="grid grid-cols-3 sm:grid-cols-4 lg:grid-cols-7 gap-1.5 p-1 rounded-xl bg-neutral-950/80 border border-neutral-800/80 min-w-0">
+        <div className="grid grid-cols-3 sm:grid-cols-4 md:grid-cols-5 xl:grid-cols-7 2xl:grid-cols-13 gap-1.5 p-1 rounded-xl bg-neutral-950/80 border border-neutral-800/80 min-w-0">
           {categories.map((c) => {
             const Icon = c.icon;
             const active = params.category === c.id;
@@ -159,7 +177,7 @@ export const ParametricSynthRack: React.FC<ParametricSynthRackProps> = ({
             <input
               type="range"
               min="10"
-              max="3000"
+              max="6000"
               step="10"
               value={params.decay_ms}
               onChange={(e) => updateField("decay_ms", parseFloat(e.target.value))}
@@ -170,12 +188,12 @@ export const ParametricSynthRack: React.FC<ParametricSynthRackProps> = ({
           {/* Pitch Decay / Sweep */}
           <div className="space-y-1">
             <div className="flex justify-between text-neutral-300">
-              <span className="truncate">Pitch Envelope Bend</span>
+              <span className="truncate">Pitch Envelope Bend / Sweep</span>
               <span className="font-mono text-cyan-300 shrink-0">{(params.pitch_decay * 100).toFixed(0)}%</span>
             </div>
             <input
               type="range"
-              min="0"
+              min="-1"
               max="1"
               step="0.02"
               value={params.pitch_decay}
@@ -199,6 +217,28 @@ export const ParametricSynthRack: React.FC<ParametricSynthRackProps> = ({
                   {materials.map((m) => (
                     <SelectItem key={m.id} value={m.id}>
                       {m.name}
+                    </SelectItem>
+                  ))}
+                </SelectContent>
+              </Select>
+            </div>
+          )}
+
+          {/* Retro Waveform Select */}
+          {params.category === "retro" && (
+            <div className="space-y-1 pt-1 min-w-0">
+              <span className="text-neutral-400 text-[11px]">NES Duty Cycle Pulse Width</span>
+              <Select
+                value={params.material_preset}
+                onValueChange={(val) => updateField("material_preset", val)}
+              >
+                <SelectTrigger className="h-8 text-xs bg-neutral-950 border-neutral-800 text-lime-300 w-full">
+                  <SelectValue placeholder="Select Duty Cycle" />
+                </SelectTrigger>
+                <SelectContent>
+                  {retroWaveforms.map((w) => (
+                    <SelectItem key={w.id} value={w.id}>
+                      {w.name}
                     </SelectItem>
                   ))}
                 </SelectContent>
@@ -275,6 +315,24 @@ export const ParametricSynthRack: React.FC<ParametricSynthRackProps> = ({
                 />
               </div>
             </>
+          )}
+
+          {params.category === "creature" && (
+            <div className="space-y-1">
+              <div className="flex justify-between text-neutral-300">
+                <span className="truncate">Vocal Tremor Flutter</span>
+                <span className="font-mono text-emerald-300 shrink-0">{(params.jitter_amount * 100).toFixed(0)}%</span>
+              </div>
+              <input
+                type="range"
+                min="0"
+                max="1"
+                step="0.05"
+                value={params.jitter_amount}
+                onChange={(e) => updateField("jitter_amount", parseFloat(e.target.value))}
+                className="w-full h-1.5 bg-neutral-800 rounded-lg appearance-none cursor-pointer accent-emerald-400"
+              />
+            </div>
           )}
 
           {/* Damping */}
@@ -365,6 +423,23 @@ export const ParametricSynthRack: React.FC<ParametricSynthRackProps> = ({
               step="0.02"
               value={params.drive}
               onChange={(e) => updateField("drive", parseFloat(e.target.value))}
+              className="w-full h-1.5 bg-neutral-800 rounded-lg appearance-none cursor-pointer accent-indigo-400"
+            />
+          </div>
+
+          {/* Bitcrush */}
+          <div className="space-y-1">
+            <div className="flex justify-between text-neutral-300">
+              <span className="truncate">Bitcrush / Lo-Fi Quantization</span>
+              <span className="font-mono text-indigo-300 shrink-0">{(params.bitcrush * 100).toFixed(0)}%</span>
+            </div>
+            <input
+              type="range"
+              min="0"
+              max="1"
+              step="0.02"
+              value={params.bitcrush}
+              onChange={(e) => updateField("bitcrush", parseFloat(e.target.value))}
               className="w-full h-1.5 bg-neutral-800 rounded-lg appearance-none cursor-pointer accent-indigo-400"
             />
           </div>

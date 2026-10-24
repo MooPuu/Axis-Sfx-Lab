@@ -177,3 +177,69 @@ export const IconSettings: React.FC<IconProps> = ({ className = "text-slate-400"
     <path d="M19.4 15A1.65 1.65 0 0 0 19.73 16.82L20.08 17.17A2 2 0 1 1 17.25 20L16.9 19.65A1.65 1.65 0 0 0 15.08 19.32A1.65 1.65 0 0 0 14 20.88V21.5A2 2 0 1 1 10 21.5V20.88A1.65 1.65 0 0 0 8.92 19.32A1.65 1.65 0 0 0 7.1 19.65L6.75 20A2 2 0 1 1 3.92 17.17L4.27 16.82A1.65 1.65 0 0 0 4.6 15A1.65 1.65 0 0 0 3.04 13.92H2.5A2 2 0 1 1 2.5 9.92H3.04A1.65 1.65 0 0 0 4.6 8.84A1.65 1.65 0 0 0 4.27 7.02L3.92 6.67A2 2 0 1 1 6.75 3.84L7.1 4.19A1.65 1.65 0 0 0 8.92 4.52A1.65 1.65 0 0 0 10 2.96V2.5A2 2 0 1 1 14 2.5V2.96A1.65 1.65 0 0 0 15.08 4.52A1.65 1.65 0 0 0 16.9 4.19L17.25 3.84A2 2 0 1 1 20.08 6.67L19.73 7.02A1.65 1.65 0 0 0 19.4 8.84A1.65 1.65 0 0 0 20.96 9.92H21.5A2 2 0 1 1 21.5 13.92H20.96A1.65 1.65 0 0 0 19.4 15Z" stroke="currentColor" strokeWidth="1.8" opacity="0.4" />
   </svg>
 );
+
+export const IconExplosion: React.FC<IconProps> = ({ className = "text-orange-400", size = 18 }) => (
+  <svg width={size} height={size} viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg" className={className}>
+    <circle cx="12" cy="12" r="8" className="fill-current opacity-25" />
+    <path d="M12 2L14 8L20 6L16 11L22 14L16 16L19 22L13 18L10 22L9 16L3 18L6 13L2 10L8 9L6 3L12 7V2Z" stroke="currentColor" strokeWidth="1.6" strokeLinejoin="round" />
+    <circle cx="12" cy="12" r="2.5" className="fill-current" />
+  </svg>
+);
+
+export const IconWeather: React.FC<IconProps> = ({ className = "text-sky-400", size = 18 }) => (
+  <svg width={size} height={size} viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg" className={className}>
+    <path d="M17.5 17C19.9853 17 22 14.9853 22 12.5C22 10.158 20.2079 8.2346 17.9157 8.024C17.3789 5.1748 14.8872 3 11.875 3C8.42322 3 5.625 5.79822 5.625 9.25C5.625 9.774 5.69 10.2827 5.8115 10.7675C3.6304 11.238 2 13.176 2 15.5C2 18.2614 4.23858 20.5 7 20.5H17" className="fill-current opacity-20" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" />
+    <path d="M8 15L6 19M12 15L10 19M16 15L14 19" stroke="currentColor" strokeWidth="2" strokeLinecap="round" />
+  </svg>
+);
+
+export const IconRetro: React.FC<IconProps> = ({ className = "text-lime-400", size = 18 }) => (
+  <svg width={size} height={size} viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg" className={className}>
+    <rect x="2" y="6" width="20" height="12" rx="4" className="fill-current opacity-20" stroke="currentColor" strokeWidth="1.8" />
+    <path d="M6 12H10M8 10V14" stroke="currentColor" strokeWidth="2" strokeLinecap="round" />
+    <circle cx="15.5" cy="13" r="1.5" className="fill-current" />
+    <circle cx="18" cy="10.5" r="1.5" className="fill-current" />
+  </svg>
+);
+
+export const IconMagic: React.FC<IconProps> = ({ className = "text-fuchsia-400", size = 18 }) => (
+  <svg width={size} height={size} viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg" className={className}>
+    <path d="M14.5 4L20 9.5L6.5 23L1 17.5L14.5 4Z" className="fill-current opacity-20" stroke="currentColor" strokeWidth="1.8" strokeLinejoin="round" />
+    <path d="M11.5 7L17 12.5" stroke="currentColor" strokeWidth="1.8" />
+    <path d="M8 3L9 1L10 3L12 4L10 5L9 7L8 5L6 4L8 3Z" className="fill-current" />
+    <path d="M19 15L19.7 13.5L21.2 13L19.7 12.5L19 11L18.3 12.5L16.8 13L18.3 13.5L19 15Z" className="fill-current" />
+  </svg>
+);
+
+export const IconWeapon: React.FC<IconProps> = ({ className = "text-red-400", size = 18 }) => (
+  <svg width={size} height={size} viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg" className={className}>
+    <circle cx="12" cy="12" r="8" className="fill-current opacity-20" />
+    <circle cx="12" cy="12" r="8" stroke="currentColor" strokeWidth="1.8" />
+    <circle cx="12" cy="12" r="3" stroke="currentColor" strokeWidth="1.8" />
+    <path d="M12 2V6M12 18V22M2 12H6M18 12H22" stroke="currentColor" strokeWidth="2" strokeLinecap="round" />
+  </svg>
+);
+
+export const IconCreature: React.FC<IconProps> = ({ className = "text-emerald-400", size = 18 }) => (
+  <svg width={size} height={size} viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg" className={className}>
+    <path d="M12 3C7 3 3 7 3 12C3 15.5 5 18 8 20L9 17L12 18L15 17L16 20C19 18 21 15.5 21 12C21 7 17 3 12 3Z" className="fill-current opacity-20" stroke="currentColor" strokeWidth="1.8" />
+    <circle cx="8.5" cy="11.5" r="1.5" className="fill-current" />
+    <circle cx="15.5" cy="11.5" r="1.5" className="fill-current" />
+    <path d="M8 15L10 14L12 15L14 14L16 15" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round" />
+  </svg>
+);
+
+export const IconCode: React.FC<IconProps> = ({ className = "text-cyan-400", size = 18 }) => (
+  <svg width={size} height={size} viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg" className={className}>
+    <rect x="2" y="4" width="20" height="16" rx="4" className="fill-current opacity-20" stroke="currentColor" strokeWidth="1.8" />
+    <path d="M8 9L5 12L8 15M16 9L19 12L16 15M13 8L11 16" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round" />
+  </svg>
+);
+
+export const IconFileAudio: React.FC<IconProps> = ({ className = "text-teal-400", size = 18 }) => (
+  <svg width={size} height={size} viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg" className={className}>
+    <path d="M4 4C4 2.89543 4.89543 2 6 2H14L20 8V20C20 21.1046 19.1046 22 18 22H6C4.89543 22 4 21.1046 4 20V4Z" className="fill-current opacity-20" stroke="currentColor" strokeWidth="1.8" />
+    <path d="M14 2V8H20" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round" />
+    <path d="M8 15V13M12 17V11M16 15V13" stroke="currentColor" strokeWidth="2" strokeLinecap="round" />
+  </svg>
+);

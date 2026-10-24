@@ -9,7 +9,7 @@ use base64::Engine;
 use loop_editor::{generate_seam_audition_buffer, process_seamless_loop, LoopSettings};
 use serde::{Deserialize, Serialize};
 use synth::{generate_sound, FastRng, SynthParams};
-use wav_writer::write_wav_with_loop;
+use wav_writer::{generate_c_header, generate_godot_import, write_custom_wav, write_wav_with_loop};
 
 #[derive(Clone, Debug, Serialize, Deserialize)]
 pub struct ProcessedAudioPayload {
@@ -20,6 +20,31 @@ pub struct ProcessedAudioPayload {
     pub loop_end_sample: u32,
     pub waveform_peaks: Vec<f32>,
     pub seam_preview_base64: Option<String>,
+}
+
+#[derive(Clone, Debug, Serialize, Deserialize)]
+pub struct CustomExportConfig {
+    pub format: String, // "wav16" | "wav24" | "wav32" | "cheader" | "godot_bundle" | "stems"
+    pub bit_depth: u16, // 16, 24, 32
+    pub is_mono: bool,
+    pub target_sample_rate: u32,
+    pub normalize_peak: bool,
+    pub base_name: String,
+}
+
+#[derive(Clone, Debug, Serialize, Deserialize)]
+pub struct CustomExportResult {
+    pub main_filename: String,
+    pub main_base64: String,
+    pub mime_type: String,
+    pub c_header_text: Option<String>,
+    pub godot_import_text: Option<String>,
+    pub stem_intro_base64: Option<String>,
+    pub stem_intro_name: Option<String>,
+    pub stem_loop_base64: Option<String>,
+    pub stem_loop_name: Option<String>,
+    pub stem_tail_base64: Option<String>,
+    pub stem_tail_name: Option<String>,
 }
 
 /// Compute downsampled waveform peaks for instant canvas visualization
@@ -128,4 +153,157 @@ pub fn generate_variations(
     }
 
     Ok(results)
+}
+
+/// Custom Game Engine & Multiformat Exporter
+pub fn render_custom_export(
+    params: &SynthParams,
+    loop_settings: &LoopSettings,
+    config: &CustomExportConfig,
+) -> Result<CustomExportResult, String> {
+    let mut p = params.clone();
+    p.sample_rate = config.target_sample_rate;
+    let (raw_l, raw_r) = generate_sound(&p);
+
+    let (final_l, final_r, l_start, l_end) =
+        process_seamless_loop(&raw_l, &raw_r, p.sample_rate, loop_settings);
+
+    let mut peak = 0.0001f32;
+    for &s in final_l.iter().chain(final_r.iter()) {
+        if s.abs() > peak {
+            peak = s.abs();
+        }
+    }
+
+    let norm_factor = if config.normalize_peak && peak > 0.0001 {
+        0.98 / peak
+    } else {
+        1.0
+    };
+
+    let norm_l: Vec<f32> = final_l.iter().map(|&x| x * norm_factor).collect();
+    let norm_r: Vec<f32> = final_r.iter().map(|&x| x * norm_factor).collect();
+
+    let loop_s = if loop_settings.enabled { Some(l_start) } else { None };
+    let loop_e = if loop_settings.enabled { Some(l_end) } else { None };
+
+    match config.format.as_str() {
+        "cheader" => {
+            let code = generate_c_header(&config.base_name, &norm_l, p.sample_rate, loop_s, loop_e);
+            let b64 = BASE64.encode(code.as_bytes());
+            Ok(CustomExportResult {
+                main_filename: format!("{}.h", config.base_name),
+                main_base64: b64,
+                mime_type: "text/x-c".into(),
+                c_header_text: Some(code),
+                godot_import_text: None,
+                stem_intro_base64: None,
+                stem_intro_name: None,
+                stem_loop_base64: None,
+                stem_loop_name: None,
+                stem_tail_base64: None,
+                stem_tail_name: None,
+            })
+        }
+        "godot_bundle" => {
+            let depth = if config.bit_depth == 24 || config.bit_depth == 32 { config.bit_depth } else { 16 };
+            let wav_bytes = write_custom_wav(
+                &norm_l,
+                if config.is_mono { None } else { Some(&norm_r) },
+                p.sample_rate,
+                depth,
+                config.is_mono,
+                loop_s,
+                loop_e,
+            )?;
+            let import_code = generate_godot_import(p.sample_rate);
+            Ok(CustomExportResult {
+                main_filename: format!("{}.wav", config.base_name),
+                main_base64: BASE64.encode(&wav_bytes),
+                mime_type: "audio/wav".into(),
+                c_header_text: None,
+                godot_import_text: Some(import_code),
+                stem_intro_base64: None,
+                stem_intro_name: None,
+                stem_loop_base64: None,
+                stem_loop_name: None,
+                stem_tail_base64: None,
+                stem_tail_name: None,
+            })
+        }
+        "stems" => {
+            let total = norm_l.len();
+            let split_pt = (total / 3).max(1);
+            let split_pt2 = (2 * total / 3).max(split_pt + 1);
+
+            let (intro_end, loop_end_pt) = if loop_settings.enabled && l_start < l_end && (l_end as usize) <= total {
+                (l_start as usize, l_end as usize)
+            } else {
+                (split_pt, split_pt2)
+            };
+
+            let depth = if config.bit_depth == 24 || config.bit_depth == 32 { config.bit_depth } else { 16 };
+
+            // Stem 1: Intro (0..intro_end)
+            let intro_l = &norm_l[0..intro_end.max(1).min(total)];
+            let intro_r = &norm_r[0..intro_end.max(1).min(total)];
+            let intro_wav = write_custom_wav(intro_l, if config.is_mono { None } else { Some(intro_r) }, p.sample_rate, depth, config.is_mono, None, None)?;
+
+            // Stem 2: Loop body
+            let loop_slice_l = &norm_l[intro_end.min(total)..loop_end_pt.min(total)];
+            let loop_slice_r = &norm_r[intro_end.min(total)..loop_end_pt.min(total)];
+            let loop_wav = write_custom_wav(loop_slice_l, if config.is_mono { None } else { Some(loop_slice_r) }, p.sample_rate, depth, config.is_mono, Some(0), Some(loop_slice_l.len() as u32))?;
+
+            // Stem 3: Tail
+            let tail_slice_l = &norm_l[loop_end_pt.min(total)..total];
+            let tail_slice_r = &norm_r[loop_end_pt.min(total)..total];
+            let tail_wav = write_custom_wav(tail_slice_l, if config.is_mono { None } else { Some(tail_slice_r) }, p.sample_rate, depth, config.is_mono, None, None)?;
+
+            let main_wav = write_custom_wav(&norm_l, if config.is_mono { None } else { Some(&norm_r) }, p.sample_rate, depth, config.is_mono, loop_s, loop_e)?;
+
+            Ok(CustomExportResult {
+                main_filename: format!("{}_full.wav", config.base_name),
+                main_base64: BASE64.encode(&main_wav),
+                mime_type: "audio/wav".into(),
+                c_header_text: None,
+                godot_import_text: None,
+                stem_intro_base64: Some(BASE64.encode(&intro_wav)),
+                stem_intro_name: Some(format!("{}_intro.wav", config.base_name)),
+                stem_loop_base64: Some(BASE64.encode(&loop_wav)),
+                stem_loop_name: Some(format!("{}_loop.wav", config.base_name)),
+                stem_tail_base64: Some(BASE64.encode(&tail_wav)),
+                stem_tail_name: Some(format!("{}_tail.wav", config.base_name)),
+            })
+        }
+        _ => {
+            // "wav16", "wav24", "wav32"
+            let depth = match config.format.as_str() {
+                "wav24" => 24,
+                "wav32" => 32,
+                _ => 16,
+            };
+            let wav_bytes = write_custom_wav(
+                &norm_l,
+                if config.is_mono { None } else { Some(&norm_r) },
+                p.sample_rate,
+                depth,
+                config.is_mono,
+                loop_s,
+                loop_e,
+            )?;
+            Ok(CustomExportResult {
+                main_filename: format!("{}.wav", config.base_name),
+                main_base64: BASE64.encode(&wav_bytes),
+                mime_type: "audio/wav".into(),
+                c_header_text: None,
+                godot_import_text: None,
+                stem_intro_base64: None,
+                stem_intro_name: None,
+                stem_loop_base64: None,
+                stem_loop_name: None,
+                stem_tail_base64: None,
+                stem_tail_name: None,
+            })
+        }
+    }
 }

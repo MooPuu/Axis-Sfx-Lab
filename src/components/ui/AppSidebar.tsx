@@ -9,6 +9,12 @@ import {
   IconFootstep,
   IconWhoosh,
   IconAmbient,
+  IconExplosion,
+  IconWeather,
+  IconRetro,
+  IconMagic,
+  IconWeapon,
+  IconCreature,
   IconLayers,
   IconDownload,
   IconSettings,
@@ -42,13 +48,19 @@ export const AppSidebar: React.FC<AppSidebarProps> = ({
   const [searchTerm, setSearchTerm] = useState("");
 
   const categories = [
-    { id: "impact", name: "Impacts", icon: IconImpact, color: "text-rose-400" },
-    { id: "motor", name: "Motors", icon: IconMotor, color: "text-amber-400" },
+    { id: "impact", name: "Impacts & Hits", icon: IconImpact, color: "text-rose-400" },
+    { id: "motor", name: "Motors & Servos", icon: IconMotor, color: "text-amber-400" },
     { id: "ui", name: "UI & Clicks", icon: IconUI, color: "text-sky-400" },
     { id: "scifi", name: "Sci-Fi Energy", icon: IconSciFi, color: "text-fuchsia-400" },
     { id: "footstep", name: "Foley Steps", icon: IconFootstep, color: "text-emerald-400" },
-    { id: "whoosh", name: "Whooshes", icon: IconWhoosh, color: "text-cyan-400" },
+    { id: "whoosh", name: "Whooshes & Swipes", icon: IconWhoosh, color: "text-cyan-400" },
     { id: "ambient", name: "Ambient Drones", icon: IconAmbient, color: "text-violet-400" },
+    { id: "explosion", name: "Explosions & Blasts", icon: IconExplosion, color: "text-orange-400" },
+    { id: "weather", name: "Weather & Nature", icon: IconWeather, color: "text-sky-400" },
+    { id: "retro", name: "Retro 8-Bit NES", icon: IconRetro, color: "text-lime-400" },
+    { id: "magic", name: "Magic & Fantasy", icon: IconMagic, color: "text-fuchsia-400" },
+    { id: "weapon", name: "Weapons & Guns", icon: IconWeapon, color: "text-red-400" },
+    { id: "creature", name: "Creatures & Roars", icon: IconCreature, color: "text-emerald-400" },
   ];
 
   const filteredPresets = presets.filter((p) =>
@@ -158,7 +170,7 @@ export const AppSidebar: React.FC<AppSidebarProps> = ({
               />
             </div>
 
-            <div className="space-y-1 max-h-48 overflow-y-auto pr-1">
+            <div className="space-y-1 max-h-60 overflow-y-auto pr-1">
               {filteredPresets.map((p) => (
                 <button
                   key={p.id}

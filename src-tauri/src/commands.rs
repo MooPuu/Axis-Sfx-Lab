@@ -1,7 +1,10 @@
 use crate::dsp::loop_editor::LoopSettings;
 use crate::dsp::presets::get_factory_presets;
 use crate::dsp::synth::SynthParams;
-use crate::dsp::{generate_variations, render_sfx_and_loop, ProcessedAudioPayload};
+use crate::dsp::{
+    generate_variations, render_custom_export, render_sfx_and_loop, CustomExportConfig,
+    CustomExportResult, ProcessedAudioPayload,
+};
 use base64::engine::general_purpose::STANDARD as BASE64;
 use base64::Engine;
 use std::fs;
@@ -30,6 +33,15 @@ pub fn cmd_batch_variations(
     jitter_pct: f32,
 ) -> Result<Vec<(String, ProcessedAudioPayload)>, String> {
     generate_variations(&params, &loop_settings, count, jitter_pct)
+}
+
+#[tauri::command]
+pub fn cmd_export_custom(
+    params: SynthParams,
+    loop_settings: LoopSettings,
+    config: CustomExportConfig,
+) -> Result<CustomExportResult, String> {
+    render_custom_export(&params, &loop_settings, &config)
 }
 
 #[tauri::command]

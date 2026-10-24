@@ -563,6 +563,8 @@ export default function App() {
         wavBase64={audioPayload?.wav_base64 || ""}
         defaultName={`${params.category}_${params.seed}`}
         isLoopEnabled={loopSettings.enabled}
+        params={params}
+        loopSettings={loopSettings}
       />
 
       {/* shadcn/ui Toaster component */}

@@ -2,7 +2,8 @@ pub mod commands;
 pub mod dsp;
 
 use commands::{
-    cmd_batch_variations, cmd_export_wav_to_file, cmd_generate_sfx, cmd_get_factory_presets,
+    cmd_batch_variations, cmd_export_custom, cmd_export_wav_to_file, cmd_generate_sfx,
+    cmd_get_factory_presets,
 };
 
 #[cfg_attr(mobile, tauri::mobile_entry_point)]
@@ -12,6 +13,7 @@ pub fn run() {
         .invoke_handler(tauri::generate_handler![
             cmd_generate_sfx,
             cmd_batch_variations,
+            cmd_export_custom,
             cmd_export_wav_to_file,
             cmd_get_factory_presets
         ])
