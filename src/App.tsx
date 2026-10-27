@@ -51,6 +51,7 @@ const DEFAULT_PARAMS: SynthParams = {
   reverb_wet: 0.3,
   reverb_decay: 0.6,
   stereo_spread: 0.5,
+  echo: false,
 };
 
 const DEFAULT_LOOP: LoopSettings = {

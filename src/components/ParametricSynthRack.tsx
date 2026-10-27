@@ -66,6 +66,20 @@ export const ParametricSynthRack: React.FC<ParametricSynthRackProps> = ({
     { id: "flesh", name: "Organic & Flesh" },
   ];
 
+  const footstepSurfaces = [
+    { id: "grass", name: "🌿 Grass & Lawn" },
+    { id: "sand", name: "🏖️ Sand & Dune" },
+    { id: "floor", name: "🏢 Tile & Concrete Floor" },
+    { id: "iron", name: "🔩 Iron Floor & Grate" },
+    { id: "wood", name: "🪵 Wooden Floor & Planks" },
+    { id: "mud", name: "💧 Wet Mud & Squelch" },
+    { id: "snow", name: "❄️ Crunchy Snow & Ice" },
+    { id: "carpet", name: "🧶 Plush Carpet & Rug" },
+    { id: "soft", name: "🌱 Soft Surface & Dirt" },
+    { id: "wet", name: "🌊 Wet Surface & Puddle" },
+    { id: "hard", name: "🪨 Hard Stone & Marble" },
+  ];
+
   const retroWaveforms = [
     { id: "wood", name: "12.5% NES Pulse" },
     { id: "glass", name: "25% NES Square" },
@@ -202,8 +216,8 @@ export const ParametricSynthRack: React.FC<ParametricSynthRackProps> = ({
             />
           </div>
 
-          {/* Material Presets (with shadcn/ui Select) */}
-          {(params.category === "impact" || params.category === "footstep") && (
+          {/* Impact Material Presets */}
+          {params.category === "impact" && (
             <div className="space-y-1 pt-1 min-w-0">
               <span className="text-neutral-400 text-[11px]">Material Density & Texture</span>
               <Select
@@ -221,6 +235,78 @@ export const ParametricSynthRack: React.FC<ParametricSynthRackProps> = ({
                   ))}
                 </SelectContent>
               </Select>
+            </div>
+          )}
+
+          {/* Footstep Ground Surfaces & Echo Option */}
+          {params.category === "footstep" && (
+            <div className="space-y-2.5 pt-1 min-w-0">
+              <div className="flex items-center justify-between">
+                <span className="text-neutral-400 text-[11px] font-semibold uppercase tracking-wider">
+                  Ground Surface Material
+                </span>
+                <span className="text-[10px] font-mono text-emerald-400 bg-emerald-950/50 px-2 py-0.5 rounded border border-emerald-800/50">
+                  {footstepSurfaces.find((s) => s.id === params.material_preset)?.name || "Surface"}
+                </span>
+              </div>
+
+              <Select
+                value={params.material_preset}
+                onValueChange={(val) => updateField("material_preset", val)}
+              >
+                <SelectTrigger className="h-8 text-xs bg-neutral-950 border-neutral-800 text-emerald-300 w-full">
+                  <SelectValue placeholder="Select Ground Surface" />
+                </SelectTrigger>
+                <SelectContent className="max-h-60">
+                  {footstepSurfaces.map((s) => (
+                    <SelectItem key={s.id} value={s.id}>
+                      {s.name}
+                    </SelectItem>
+                  ))}
+                </SelectContent>
+              </Select>
+
+              {/* Surface Quick-Select Chips */}
+              <div className="grid grid-cols-2 sm:grid-cols-3 xl:grid-cols-4 gap-1 pt-0.5">
+                {footstepSurfaces.map((s) => {
+                  const active = params.material_preset === s.id;
+                  return (
+                    <button
+                      key={s.id}
+                      type="button"
+                      onClick={() => updateField("material_preset", s.id)}
+                      className={`px-2 py-1 text-[10px] font-medium rounded-lg truncate transition-all cursor-pointer text-left ${
+                        active
+                          ? "bg-emerald-500/25 text-emerald-300 border border-emerald-500/50 shadow-xs font-semibold"
+                          : "bg-neutral-900/60 text-neutral-400 hover:text-neutral-200 hover:bg-neutral-800/60 border border-neutral-800/60"
+                      }`}
+                      title={s.name}
+                    >
+                      {s.name}
+                    </button>
+                  );
+                })}
+              </div>
+
+              {/* Echo On / Off Option Toggle */}
+              <div className="p-2.5 rounded-xl bg-neutral-900/90 border border-neutral-800 flex items-center justify-between shadow-xs">
+                <div className="flex flex-col pr-2">
+                  <span className="text-[11px] font-semibold text-neutral-200">Acoustic Echo Slapback</span>
+                  <span className="text-[9px] text-neutral-400">Hallway / corridor acoustic reflection</span>
+                </div>
+                <button
+                  type="button"
+                  onClick={() => updateField("echo", !params.echo)}
+                  className={`px-3 py-1.5 rounded-lg text-xs font-bold transition-all cursor-pointer flex items-center space-x-1.5 shrink-0 ${
+                    params.echo
+                      ? "bg-emerald-500 text-white shadow-md shadow-emerald-500/25 border border-emerald-400"
+                      : "bg-neutral-800 text-neutral-400 hover:text-neutral-200 border border-neutral-700"
+                  }`}
+                >
+                  <span className={`w-2 h-2 rounded-full ${params.echo ? "bg-white animate-pulse" : "bg-neutral-500"}`} />
+                  <span>{params.echo ? "ECHO ON" : "ECHO OFF"}</span>
+                </button>
+              </div>
             </div>
           )}
 
@@ -476,6 +562,26 @@ export const ParametricSynthRack: React.FC<ParametricSynthRackProps> = ({
               onChange={(e) => updateField("stereo_spread", parseFloat(e.target.value))}
               className="w-full h-1.5 bg-neutral-800 rounded-lg appearance-none cursor-pointer accent-indigo-400"
             />
+          </div>
+
+          {/* Acoustic Echo Toggle */}
+          <div className="flex items-center justify-between p-2 rounded-xl bg-neutral-950/60 border border-neutral-800/80 pt-2">
+            <div className="flex flex-col">
+              <span className="text-xs font-medium text-neutral-300">Acoustic Echo Slapback</span>
+              <span className="text-[10px] text-neutral-500">Room & corridor reflection</span>
+            </div>
+            <button
+              type="button"
+              onClick={() => updateField("echo", !params.echo)}
+              className={`px-2.5 py-1 rounded-lg text-xs font-semibold transition-all cursor-pointer flex items-center space-x-1.5 ${
+                params.echo
+                  ? "bg-emerald-500 text-white font-bold shadow-md shadow-emerald-500/20"
+                  : "bg-neutral-800 text-neutral-400 hover:text-neutral-200 border border-neutral-700/80"
+              }`}
+            >
+              <span className={`w-1.5 h-1.5 rounded-full ${params.echo ? "bg-white animate-pulse" : "bg-neutral-500"}`} />
+              <span>{params.echo ? "ON" : "OFF"}</span>
+            </button>
           </div>
         </div>
       </div>

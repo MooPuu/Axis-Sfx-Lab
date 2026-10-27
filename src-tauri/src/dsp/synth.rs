@@ -81,12 +81,19 @@ pub struct SynthParams {
     pub reverb_wet: f32,
     pub reverb_decay: f32,
     pub stereo_spread: f32,
+    #[serde(default)]
+    pub echo: bool,
 }
 
 /// Generates raw stereo audio buffers based on the procedural recipe
 pub fn generate_sound(params: &SynthParams) -> (Vec<f32>, Vec<f32>) {
     let sr = params.sample_rate as f32;
-    let total_samples = ((params.duration_ms / 1000.0) * sr).round() as usize;
+    let duration_ms = if params.echo && params.duration_ms < 850.0 {
+        params.duration_ms.max(850.0)
+    } else {
+        params.duration_ms
+    };
+    let total_samples = ((duration_ms / 1000.0) * sr).round() as usize;
     let mut left = vec![0.0f32; total_samples];
     let mut right = vec![0.0f32; total_samples];
 
@@ -107,6 +114,20 @@ pub fn generate_sound(params: &SynthParams) -> (Vec<f32>, Vec<f32>) {
         "weapon" => generate_weapon(&mut left, &mut right, params, &mut rng, sr),
         "creature" => generate_creature(&mut left, &mut right, params, &mut rng, sr),
         _ => generate_impact(&mut left, &mut right, params, &mut rng, sr),
+    }
+
+    // Apply Echo slapback effect (hallway / corridor / cavern / canyon acoustic reflection)
+    if params.echo {
+        let mut echo_delay = DelayEffect::new(params.sample_rate, 160.0, 0.42, 0.52);
+        let mut echo_filter_l = SvfFilter::new(3400.0, 1.0);
+        let mut echo_filter_r = SvfFilter::new(3400.0, 1.0);
+        for i in 0..total_samples {
+            let (dl, dr) = echo_delay.process(left[i], right[i]);
+            let fl = echo_filter_l.process_lp(dl, sr);
+            let fr = echo_filter_r.process_lp(dr, sr);
+            left[i] = left[i] * 0.72 + fl * 0.48;
+            right[i] = right[i] * 0.72 + fr * 0.48;
+        }
     }
 
     // Apply Post-FX: Filter, Saturation, Bitcrush, Stereo Delay, Reverb
@@ -410,7 +431,7 @@ fn generate_scifi(
 }
 
 // -------------------------------------------------------------
-// 5. FOOTSTEP & FOLEY (Physiological Dual-Contact Human Model)
+// 5. FOOTSTEP & FOLEY (Multi-Surface Physical Contact Model)
 // -------------------------------------------------------------
 fn generate_footstep(
     left: &mut [f32],
@@ -420,44 +441,370 @@ fn generate_footstep(
     sr: f32,
 ) {
     let total = left.len();
-    let base_f = params.base_freq.clamp(40.0, 200.0);
-    let mut heel_filter = SvfFilter::new(base_f * 1.8, 1.6);
-    let toe_start = ((sr * 0.045) as usize).min(total / 2);
+    let base_f = params.base_freq.clamp(35.0, 300.0);
+    let toe_start = ((sr * 0.048) as usize).min(total / 2);
+    let mat = params.material_preset.to_lowercase();
 
-    let (scuff_f, scuff_q) = match params.material_preset.as_str() {
-        "metal" => (3800.0, 3.5),
-        "wood" => (240.0, 2.0), // hollow floorboard box
-        "glass" => (5200.0, 2.5),
-        "stone" => (1800.0, 1.8),
-        _ => (1200.0, 1.5),
-    };
-    let mut scuff_filter = SvfFilter::new(scuff_f, scuff_q);
+    match mat.as_str() {
+        "grass" => {
+            // 1. Grass & Lawn:
+            // Soft damp heel ground absorption + crinkling grass blades crushing & fibrous snap
+            let mut grass_bp = SvfFilter::new(3600.0, 1.8);
+            let mut grass_hp = SvfFilter::new(4800.0, 1.2);
+            let mut ground_lp = SvfFilter::new(120.0, 1.5);
 
-    for i in 0..total {
-        let t = i as f32 / sr;
+            for i in 0..total {
+                let t = i as f32 / sr;
 
-        // 1. Heel strike thump
-        let heel_env = (-t * 42.0).exp();
-        let heel_osc = (2.0 * PI * base_f * (1.0 + (-t * 70.0).exp()) * t).sin();
-        let heel_thud = heel_filter.process_lp(heel_osc * heel_env * 1.6 + rng.next_brown() * heel_env * 0.8, sr);
+                // Soft ground compaction thump
+                let heel_env = (-t * 48.0).exp();
+                let ground_thump = ground_lp.process_lp(
+                    (2.0 * PI * 85.0 * t).sin() * heel_env * 1.1 + rng.next_brown() * heel_env * 0.9,
+                    sr,
+                );
 
-        // 2. Toe scuff & surface friction
-        let toe_sig = if i >= toe_start {
-            let tt = (i - toe_start) as f32 / sr;
-            let toe_env = (-tt * 30.0).exp();
-            let surface_noise = if params.material_preset == "stone" {
-                rng.next_pink() * (1.0 + if rng.next_f32() > 0.85 { 1.5 } else { 0.0 })
-            } else {
-                rng.next_pink()
-            };
-            scuff_filter.process_bp(surface_noise * toe_env * 1.4 * params.noise_mix, sr)
-        } else {
-            0.0
-        };
+                // Crinkling blades of grass bending underfoot
+                let blade_env = if i > 100 && i < ((sr * 0.16) as usize).min(total) {
+                    let bt = (i - 100) as f32 / sr;
+                    (-bt * 28.0).exp() * (1.0 + if rng.next_f32() > 0.82 { 1.8 } else { 0.0 })
+                } else {
+                    0.0
+                };
+                let blade_crush = grass_bp.process_bp(rng.next_pink() * blade_env * 2.2, sr)
+                    + grass_hp.process_hp(rng.next_bipolar() * blade_env * 1.1, sr);
 
-        let combined = heel_thud * 1.3 + toe_sig * 1.4;
-        left[i] = combined;
-        right[i] = combined;
+                // Toe-off turf brush
+                let toe_swish = if i >= toe_start {
+                    let tt = (i - toe_start) as f32 / sr;
+                    let tenv = (-tt * 38.0).exp();
+                    grass_bp.process_bp(rng.next_pink() * tenv * 1.2 * params.noise_mix, sr)
+                } else {
+                    0.0
+                };
+
+                let combined = ground_thump * 1.2 + blade_crush * 1.6 * params.noise_mix + toe_swish * 1.1;
+                let pan = params.stereo_spread * 0.15;
+                left[i] = combined * (1.0 - pan);
+                right[i] = combined * (1.0 + pan);
+            }
+        }
+        "sand" => {
+            // 2. Sand & Dune:
+            // Granular sink thump + sweeping frictional grain slip (2400Hz -> 850Hz)
+            let mut sand_filter = SvfFilter::new(1800.0, 2.2);
+            let mut bed_filter = SvfFilter::new(140.0, 1.8);
+
+            for i in 0..total {
+                let t = i as f32 / sr;
+
+                let heel_env = (-t * 36.0).exp();
+                let sink_thump = bed_filter.process_lp(
+                    (2.0 * PI * 95.0 * t).sin() * heel_env + rng.next_brown() * heel_env * 1.2,
+                    sr,
+                );
+
+                let friction_f = 2400.0 * (-t * 20.0).exp() + 850.0;
+                sand_filter.cutoff = friction_f;
+
+                let friction_env = (-t * 22.0).exp();
+                let grit = (rng.next_pink() + rng.next_bipolar() * 0.35) * friction_env * 1.8 * params.noise_mix;
+                let sand_grain = sand_filter.process_bp(grit, sr);
+
+                let toe_sand = if i >= toe_start {
+                    let tt = (i - toe_start) as f32 / sr;
+                    let tenv = (-tt * 24.0).exp();
+                    sand_filter.process_bp(rng.next_pink() * tenv * 1.3, sr)
+                } else {
+                    0.0
+                };
+
+                let combined = sink_thump * 1.3 + sand_grain * 1.7 + toe_sand * 1.2;
+                left[i] = combined;
+                right[i] = combined;
+            }
+        }
+        "floor" => {
+            // 3. Interior Tile / Hardwood Floor:
+            // Crisp, instantaneous shoe sole tap transient + tight room cavity bounce (480Hz)
+            let mut tap_filter = SvfFilter::new(3400.0, 1.8);
+            let mut cavity_filter = SvfFilter::new(480.0, 2.5);
+
+            for i in 0..total {
+                let t = i as f32 / sr;
+
+                // Sole tap click (<3ms)
+                let click_env = if i < 140 { (-t * 1200.0).exp() } else { 0.0 };
+                let click = tap_filter.process_hp(rng.next_bipolar() * click_env * 2.2, sr);
+
+                // Flat floor bounce
+                let body_env = (-t * 52.0).exp();
+                let body_osc = (2.0 * PI * 220.0 * t).sin() * body_env;
+                let body = cavity_filter.process_bp(body_osc + rng.next_brown() * body_env * 0.8, sr);
+
+                // Clean toe tap
+                let toe = if i >= toe_start && i < toe_start + 180 {
+                    let tt = (i - toe_start) as f32 / sr;
+                    let tenv = (-tt * 800.0).exp();
+                    tap_filter.process_hp(rng.next_bipolar() * tenv * 1.4, sr)
+                } else {
+                    0.0
+                };
+
+                let combined = click * 1.8 + body * 1.6 + toe * 1.2;
+                left[i] = combined;
+                right[i] = combined;
+            }
+        }
+        "iron" | "iron floor" | "metal" => {
+            // 4. Iron Floor & Metal Grate / Industrial Catwalk:
+            // Sharp steel strike clink + multi-modal plate resonance (380Hz, 820Hz, 1480Hz, 2350Hz)
+            let mut clink_filter = SvfFilter::new(4800.0, 2.0);
+            let mut plate_filter = SvfFilter::new(820.0, 4.0);
+
+            for i in 0..total {
+                let t = i as f32 / sr;
+
+                let clink_env = if i < 180 { (-t * 900.0).exp() } else { 0.0 };
+                let clink = clink_filter.process_hp(rng.next_bipolar() * clink_env * 2.5, sr);
+
+                let mode_env = (-t * 22.0).exp() * (1.0 - params.damping * 0.3).max(0.1);
+                let mode1 = (2.0 * PI * 380.0 * t).sin() * 0.5;
+                let mode2 = (2.0 * PI * 820.0 * t).sin() * 0.4;
+                let mode3 = (2.0 * PI * 1480.0 * t).sin() * 0.25;
+                let mode4 = (2.0 * PI * 2350.0 * t).sin() * 0.15;
+                let modal_sum = (mode1 + mode2 + mode3 + mode4) * mode_env;
+                let plate = plate_filter.process_bp(modal_sum, sr);
+
+                let toe_clank = if i >= toe_start {
+                    let tt = (i - toe_start) as f32 / sr;
+                    let tenv = (-tt * 38.0).exp();
+                    (2.0 * PI * 1150.0 * tt).sin() * tenv * 0.5 + rng.next_bipolar() * tenv * 0.3
+                } else {
+                    0.0
+                };
+
+                let combined = clink * 1.6 + plate * 1.8 + toe_clank * 1.1;
+                let pan = params.stereo_spread * 0.25;
+                left[i] = combined * (1.0 - pan);
+                right[i] = combined * (1.0 + pan);
+            }
+        }
+        "wood" | "wooden floor" => {
+            // 5. Wooden Floor & Hollow Planks:
+            // Leather sole slap + warm hollow floorboard acoustic box (195Hz & 340Hz)
+            let mut sole_filter = SvfFilter::new(1800.0, 1.5);
+            let mut box_filter1 = SvfFilter::new(195.0, 3.2);
+            let mut box_filter2 = SvfFilter::new(340.0, 2.5);
+
+            for i in 0..total {
+                let t = i as f32 / sr;
+
+                let tap_env = if i < 150 { (-t * 1100.0).exp() } else { 0.0 };
+                let tap = sole_filter.process_bp(rng.next_bipolar() * tap_env * 2.0, sr);
+
+                let body_env = (-t * 40.0).exp();
+                let b1 = box_filter1.process_bp((2.0 * PI * 195.0 * t).sin() * body_env * 1.8, sr);
+                let b2 = box_filter2.process_bp((2.0 * PI * 340.0 * t).sin() * body_env * 1.2, sr);
+                let wood_body = (b1 + b2) * 1.4 + rng.next_brown() * body_env * 0.8;
+
+                let toe_knock = if i >= toe_start {
+                    let tt = (i - toe_start) as f32 / sr;
+                    let tenv = (-tt * 45.0).exp();
+                    box_filter1.process_bp((2.0 * PI * 220.0 * tt).sin() * tenv * 1.1, sr)
+                } else {
+                    0.0
+                };
+
+                let combined = tap * 1.5 + wood_body * 1.5 + toe_knock * 1.0;
+                left[i] = combined;
+                right[i] = combined;
+            }
+        }
+        "mud" => {
+            // 6. Wet Mud & Suction Squelch:
+            // Viscous fluid plop + resonant bubbling + suction vacuum release "shluck"
+            let mut squelch_filter = SvfFilter::new(1250.0, 3.0);
+            let release_start = toe_start + ((sr * 0.035) as usize);
+
+            for i in 0..total {
+                let t = i as f32 / sr;
+
+                let heel_env = (-t * 32.0).exp();
+                let sludge_osc = (2.0 * PI * 70.0 * (1.0 + (-t * 50.0).exp()) * t).sin();
+                let sludge = sludge_osc * heel_env * 1.6 + rng.next_brown() * heel_env * 1.4;
+
+                let bubble_f = 500.0 + (2.0 * PI * 18.0 * t).sin().abs() * 800.0;
+                squelch_filter.cutoff = bubble_f;
+                let squelch_env = (-t * 26.0).exp();
+                let squelch_noise = rng.next_pink() * squelch_env * 1.8 * params.noise_mix;
+                let squelch = squelch_filter.process_bp(squelch_noise, sr);
+
+                let suction = if i >= release_start && i < release_start + ((sr * 0.08) as usize).min(total) {
+                    let st = (i - release_start) as f32 / sr;
+                    let senv = (-st * 45.0).exp();
+                    let pop_f = 320.0 + st * 4500.0;
+                    (2.0 * PI * pop_f * st).sin() * senv * 1.6 + rng.next_pink() * senv * 1.2
+                } else {
+                    0.0
+                };
+
+                let combined = sludge * 1.1 + squelch * 1.6 + suction * 1.5;
+                left[i] = combined;
+                right[i] = combined;
+            }
+        }
+        "snow" => {
+            // 7. Crunchy Snow & Ice Crust:
+            // Micro-fracture ice snaps (2.5-6.5kHz) + compacting crust body + squeaking ice grains
+            let mut snap_filter = SvfFilter::new(4200.0, 2.5);
+            let mut crust_filter = SvfFilter::new(1350.0, 2.0);
+
+            for i in 0..total {
+                let t = i as f32 / sr;
+
+                let body_env = (-t * 30.0).exp();
+                let body_thud = (2.0 * PI * 135.0 * t).sin() * body_env * 1.1 + rng.next_brown() * body_env * 0.9;
+
+                let snap_active = i < ((sr * 0.09) as usize).min(total);
+                let snap_impulse = if snap_active && rng.next_f32() > 0.88 {
+                    rng.next_bipolar() * 2.5
+                } else {
+                    0.0
+                };
+                let snaps = snap_filter.process_hp(snap_impulse, sr);
+
+                let creak_env = (-t * 24.0).exp();
+                let creak = crust_filter.process_bp(rng.next_pink() * creak_env * 2.0 * params.noise_mix, sr);
+
+                let toe_crunch = if i >= toe_start {
+                    let tt = (i - toe_start) as f32 / sr;
+                    let tenv = (-tt * 32.0).exp();
+                    let toe_snap = if rng.next_f32() > 0.86 { rng.next_bipolar() * 2.0 } else { 0.0 };
+                    snap_filter.process_bp(toe_snap + rng.next_pink() * tenv * 1.5, sr)
+                } else {
+                    0.0
+                };
+
+                let combined = body_thud * 1.0 + snaps * 2.0 + creak * 1.5 + toe_crunch * 1.3;
+                left[i] = combined;
+                right[i] = combined;
+            }
+        }
+        "carpet" => {
+            // 8. Plush Carpet & Rug:
+            // Heavily absorbed low frequency displacement (75-110Hz), muted high end
+            let mut carpet_filter = SvfFilter::new(380.0, 1.2);
+
+            for i in 0..total {
+                let t = i as f32 / sr;
+
+                let heel_env = (-t * 40.0).exp();
+                let soft_thump = (2.0 * PI * 85.0 * t).sin() * heel_env * 1.4 + rng.next_brown() * heel_env * 1.1;
+                let filtered = carpet_filter.process_lp(soft_thump, sr);
+
+                let toe = if i >= toe_start {
+                    let tt = (i - toe_start) as f32 / sr;
+                    let tenv = (-tt * 35.0).exp();
+                    carpet_filter.process_lp((2.0 * PI * 95.0 * tt).sin() * tenv * 0.8, sr)
+                } else {
+                    0.0
+                };
+
+                let combined = filtered * 1.6 + toe * 1.0;
+                left[i] = combined;
+                right[i] = combined;
+            }
+        }
+        "soft" | "soft surfaces" | "flesh" => {
+            // 9. Soft Surface / Forest Soil / Dirt:
+            // Organic low-frequency thud with natural soil displacement
+            let mut soil_filter = SvfFilter::new(750.0, 1.4);
+
+            for i in 0..total {
+                let t = i as f32 / sr;
+
+                let heel_env = (-t * 42.0).exp();
+                let earth_thump = (2.0 * PI * 105.0 * t).sin() * heel_env * 1.3 + rng.next_brown() * heel_env * 1.2;
+                let filtered_earth = soil_filter.process_lp(earth_thump, sr);
+
+                let toe_soil = if i >= toe_start {
+                    let tt = (i - toe_start) as f32 / sr;
+                    let tenv = (-tt * 30.0).exp();
+                    soil_filter.process_bp(rng.next_pink() * tenv * 1.2 * params.noise_mix, sr)
+                } else {
+                    0.0
+                };
+
+                let combined = filtered_earth * 1.5 + toe_soil * 1.2;
+                left[i] = combined;
+                right[i] = combined;
+            }
+        }
+        "wet" | "wet surfaces" => {
+            // 10. Wet Surface & Shallow Puddle:
+            // Ground contact + shallow water slap & water droplet spray sizzle
+            let mut splash_filter = SvfFilter::new(4500.0, 1.6);
+            let mut ground_filter = SvfFilter::new(260.0, 1.8);
+
+            for i in 0..total {
+                let t = i as f32 / sr;
+
+                let heel_env = (-t * 45.0).exp();
+                let ground = ground_filter.process_lp(
+                    (2.0 * PI * 140.0 * t).sin() * heel_env * 1.3 + rng.next_brown() * heel_env * 0.9,
+                    sr,
+                );
+
+                let splash_env = if i < 180 { (-t * 600.0).exp() } else { 0.0 };
+                let water_slap = splash_filter.process_hp(rng.next_bipolar() * splash_env * 2.6, sr);
+
+                let spray_env = (-t * 32.0).exp();
+                let droplet_spray = splash_filter.process_bp(rng.next_pink() * spray_env * 2.2 * params.noise_mix, sr);
+
+                let toe_splash = if i >= toe_start {
+                    let tt = (i - toe_start) as f32 / sr;
+                    let tenv = (-tt * 35.0).exp();
+                    splash_filter.process_bp(rng.next_pink() * tenv * 1.5, sr)
+                } else {
+                    0.0
+                };
+
+                let combined = ground * 1.2 + water_slap * 1.7 + droplet_spray * 1.4 + toe_splash * 1.2;
+                left[i] = combined;
+                right[i] = combined;
+            }
+        }
+        _ => {
+            // 11. "hard" | "hard surfaces" | "stone" (Hard Stone, Marble, Concrete):
+            // Solid mineral strike with sharp high transient and dry grit scuff
+            let mut strike_filter = SvfFilter::new(3200.0, 1.8);
+            let mut stone_filter = SvfFilter::new(190.0, 2.0);
+
+            for i in 0..total {
+                let t = i as f32 / sr;
+
+                let strike_env = if i < 120 { (-t * 1400.0).exp() } else { 0.0 };
+                let strike = strike_filter.process_hp(rng.next_bipolar() * strike_env * 2.2, sr);
+
+                let body_env = (-t * 48.0).exp();
+                let stone_thud = stone_filter.process_lp(
+                    (2.0 * PI * base_f * t).sin() * body_env * 1.5 + rng.next_brown() * body_env * 1.0,
+                    sr,
+                );
+
+                let toe_scuff = if i >= toe_start {
+                    let tt = (i - toe_start) as f32 / sr;
+                    let tenv = (-tt * 36.0).exp();
+                    strike_filter.process_bp(rng.next_pink() * tenv * 1.4 * params.noise_mix, sr)
+                } else {
+                    0.0
+                };
+
+                let combined = strike * 1.6 + stone_thud * 1.4 + toe_scuff * 1.2;
+                left[i] = combined;
+                right[i] = combined;
+            }
+        }
     }
 }
 

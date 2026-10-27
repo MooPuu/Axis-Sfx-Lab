@@ -24,6 +24,7 @@ export interface SynthParams {
   reverb_wet: number;
   reverb_decay: number;
   stereo_spread: number;
+  echo?: boolean;
 }
 
 export interface LoopSettings {
