@@ -301,7 +301,135 @@ export async function apiExportWav(filePath: string, wavBase64: string): Promise
   return await invoke<string>("cmd_export_wav_to_file", { filePath, wavBase64 });
 }
 
-// Download helper for web/tauri
+export function audioBufferToWavBase64(audioBuffer: AudioBuffer): string {
+  const numChannels = audioBuffer.numberOfChannels;
+  const sampleRate = audioBuffer.sampleRate;
+  const format = 1; // PCM
+  const bitDepth = 16;
+  const bytesPerSample = bitDepth / 8;
+  const blockAlign = numChannels * bytesPerSample;
+
+  const numFrames = audioBuffer.length;
+  const dataSize = numFrames * blockAlign;
+  const buffer = new ArrayBuffer(44 + dataSize);
+  const view = new DataView(buffer);
+
+  const writeString = (offset: number, str: string) => {
+    for (let i = 0; i < str.length; i++) {
+      view.setUint8(offset + i, str.charCodeAt(i));
+    }
+  };
+
+  writeString(0, "RIFF");
+  view.setUint32(4, 36 + dataSize, true);
+  writeString(8, "WAVE");
+  writeString(12, "fmt ");
+  view.setUint32(16, 16, true);
+  view.setUint16(20, format, true);
+  view.setUint16(22, numChannels, true);
+  view.setUint32(24, sampleRate, true);
+  view.setUint32(28, sampleRate * blockAlign, true);
+  view.setUint16(32, blockAlign, true);
+  view.setUint16(34, bitDepth, true);
+  writeString(36, "data");
+  view.setUint32(40, dataSize, true);
+
+  const channelData: Float32Array[] = [];
+  for (let c = 0; c < numChannels; c++) {
+    channelData.push(audioBuffer.getChannelData(c));
+  }
+
+  let offset = 44;
+  for (let i = 0; i < numFrames; i++) {
+    for (let c = 0; c < numChannels; c++) {
+      const sample = Math.max(-1, Math.min(1, channelData[c][i]));
+      const intSample = sample < 0 ? sample * 0x8000 : sample * 0x7fff;
+      view.setInt16(offset, intSample, true);
+      offset += 2;
+    }
+  }
+
+  const bytes = new Uint8Array(buffer);
+  let binary = "";
+  const chunkSize = 8192;
+  for (let i = 0; i < bytes.length; i += chunkSize) {
+    binary += String.fromCharCode.apply(
+      null,
+      Array.from(bytes.subarray(i, i + chunkSize))
+    );
+  }
+  return btoa(binary);
+}
+
+export function extractWaveformPeaks(
+  audioBuffer: AudioBuffer,
+  peakCount: number = 100
+): number[] {
+  const channelData = audioBuffer.getChannelData(0);
+  const totalLength = channelData.length;
+  const blockSize = Math.floor(totalLength / peakCount) || 1;
+  const peaks: number[] = [];
+
+  for (let i = 0; i < peakCount; i++) {
+    const start = i * blockSize;
+    const end = Math.min(start + blockSize, totalLength);
+    let max = 0;
+    for (let j = start; j < end; j++) {
+      const abs = Math.abs(channelData[j]);
+      if (abs > max) max = abs;
+    }
+    peaks.push(max);
+  }
+  return peaks;
+}
+
+export async function processRealAudioArrayBuffer(
+  arrayBuffer: ArrayBuffer
+): Promise<ProcessedAudioPayload> {
+  const audioCtx = new (window.AudioContext ||
+    (window as unknown as { webkitAudioContext: typeof AudioContext })
+      .webkitAudioContext)();
+  const decodedBuffer = await audioCtx.decodeAudioData(arrayBuffer);
+  const wavBase64 = audioBufferToWavBase64(decodedBuffer);
+  const peaks = extractWaveformPeaks(decodedBuffer, 100);
+
+  return {
+    wav_base64: wavBase64,
+    sample_rate: decodedBuffer.sampleRate,
+    duration_ms: decodedBuffer.duration * 1000,
+    loop_start_sample: Math.floor(decodedBuffer.length * 0.05),
+    loop_end_sample: Math.floor(decodedBuffer.length * 0.95),
+    waveform_peaks: peaks,
+  };
+}
+
+export interface RealSoundItem {
+  id: string;
+  category: string;
+  name: string;
+  file: string;
+  duration?: number;
+}
+
+export async function loadRealSoundFromFile(
+  filePath: string
+): Promise<ProcessedAudioPayload> {
+  const resp = await fetch(filePath);
+  const arrayBuffer = await resp.arrayBuffer();
+  return processRealAudioArrayBuffer(arrayBuffer);
+}
+
+export async function loadRealSoundManifest(): Promise<RealSoundItem[]> {
+  try {
+    const resp = await fetch("/sounds/manifest.json");
+    if (!resp.ok) return [];
+    return await resp.json();
+  } catch (err) {
+    console.error("Failed to load real sounds manifest:", err);
+    return [];
+  }
+}
+
 export function triggerBrowserDownload(base64: string, filename: string, mimeType: string = "audio/wav") {
   const link = document.createElement("a");
   link.href = `data:${mimeType};base64,${base64}`;

@@ -4,16 +4,21 @@ import {
   LoopSettings,
   ProcessedAudioPayload,
   PresetInfo,
+  RealSoundItem,
   audioPlayer,
   apiGenerateSfx,
   apiBatchVariations,
   apiGetFactoryPresets,
+  loadRealSoundManifest,
+  loadRealSoundFromFile,
+  processRealAudioArrayBuffer,
 } from "./services/audioService";
 import { WaveformViewer } from "./components/WaveformViewer";
 import { LoopControlPanel } from "./components/LoopControlPanel";
 import { ParametricSynthRack } from "./components/ParametricSynthRack";
 import { BatchVariationModal } from "./components/BatchVariationModal";
 import { GameEngineExportModal } from "./components/GameEngineExportModal";
+import { PixabayHubModal } from "./components/PixabayHubModal";
 import { AppSidebar } from "./components/ui/AppSidebar";
 import { ThemeSwitch } from "./components/ui/ThemeSwitch";
 import { MuteCheckbox } from "./components/ui/MuteCheckbox";
@@ -77,6 +82,13 @@ export default function App() {
   const [presets, setPresets] = useState<PresetInfo[]>([]);
   const [selectedPresetId, setSelectedPresetId] = useState<string>("impact_metal_pipe");
 
+  // Real Studio & Pixabay audio state
+  const [isPixabayHubOpen, setIsPixabayHubOpen] = useState<boolean>(false);
+  const [realSounds, setRealSounds] = useState<RealSoundItem[]>([]);
+  const [selectedRealSoundId, setSelectedRealSoundId] = useState<string>("");
+  const [isRealAudioLoaded, setIsRealAudioLoaded] = useState<boolean>(false);
+  const [_activeSoundTitle, setActiveSoundTitle] = useState<string>("Procedural Sound");
+
   // UI Theme state ("dark" | "light")
   const [theme, setTheme] = useState<"dark" | "light">(() => {
     return (localStorage.getItem("axis_sfx_theme") as "dark" | "light") || "dark";
@@ -139,7 +151,7 @@ export default function App() {
     });
   };
 
-  // Fetch factory presets on mount
+  // Fetch factory presets & real studio sounds on mount
   useEffect(() => {
     apiGetFactoryPresets().then((res) => {
       if (res && res.length > 0) {
@@ -147,6 +159,11 @@ export default function App() {
         if (!res.some((p) => p.id === selectedPresetId)) {
           setSelectedPresetId(res[0].id);
         }
+      }
+    });
+    loadRealSoundManifest().then((res) => {
+      if (res && res.length > 0) {
+        setRealSounds(res);
       }
     });
   }, [selectedPresetId]);
@@ -181,11 +198,12 @@ export default function App() {
   }, []);
 
   useEffect(() => {
+    if (isRealAudioLoaded) return;
     const timer = setTimeout(() => {
       triggerSynthesis(params, loopSettings);
     }, 45);
     return () => clearTimeout(timer);
-  }, [params, loopSettings, triggerSynthesis]);
+  }, [params, loopSettings, triggerSynthesis, isRealAudioLoaded]);
 
   // Smooth playhead animation loop
   useEffect(() => {
@@ -263,6 +281,7 @@ export default function App() {
 
   // Mutate (5% seed & subtle jitter)
   const handleMutate = () => {
+    setIsRealAudioLoaded(false);
     setParams((prev) => {
       const newSeed = Math.floor(Math.random() * 1000000);
       const jitter = (Math.random() * 2 - 1) * 0.06;
@@ -282,6 +301,7 @@ export default function App() {
 
   // Complete Randomize
   const handleRandomize = () => {
+    setIsRealAudioLoaded(false);
     const categories = ["impact", "motor", "ui", "scifi", "footstep", "whoosh", "ambient"];
     const materials = ["metal", "wood", "glass", "stone", "flesh"];
     const randomCat = categories[Math.floor(Math.random() * categories.length)];
@@ -321,10 +341,12 @@ export default function App() {
 
   // Load Preset
   const handleSelectPreset = (presetId: string) => {
+    setIsRealAudioLoaded(false);
     setSelectedPresetId(presetId);
     const found = presets.find((p) => p.id === presetId);
     if (found) {
       setParams(found.params);
+      setActiveSoundTitle(found.name);
       if (found.is_loop !== undefined) {
         setLoopSettings((prev) => ({ ...prev, enabled: Boolean(found.is_loop) }));
       }
@@ -333,6 +355,63 @@ export default function App() {
         description: `Loaded "${found.name}" (${found.subcategory || found.category}).`,
         variant: "default",
       });
+    }
+  };
+
+  // Load real audio (from Pixabay or local dropped file)
+  const handleLoadRealAudio = useCallback(async (payload: ProcessedAudioPayload, soundName: string) => {
+    setIsRealAudioLoaded(true);
+    setAudioPayload(payload);
+    setActiveSoundTitle(soundName);
+    await audioPlayer.loadWavBase64(payload.wav_base64, false);
+  }, []);
+
+  // Select bundled real sound
+  const handleSelectRealSound = async (item: RealSoundItem) => {
+    try {
+      setSelectedRealSoundId(item.id);
+      const payload = await loadRealSoundFromFile(item.file);
+      await handleLoadRealAudio(payload, item.name);
+      toast({
+        title: "Real Studio SFX Loaded",
+        description: `Loaded authentic recording "${item.name}".`,
+        variant: "default",
+      });
+    } catch (err) {
+      console.error("Failed to load real sound:", err);
+      toast({
+        title: "Load Error",
+        description: "Could not load studio sound file.",
+        variant: "destructive",
+      });
+    }
+  };
+
+  // Global drag and drop for Pixabay / local audio files
+  const handleWindowDrop = async (e: React.DragEvent) => {
+    e.preventDefault();
+    if (e.dataTransfer.files && e.dataTransfer.files.length > 0) {
+      const file = e.dataTransfer.files[0];
+      if (file.name.match(/\.(mp3|wav|ogg|flac|aac)$/i) || file.type.startsWith("audio/")) {
+        try {
+          const arrayBuffer = await file.arrayBuffer();
+          const payload = await processRealAudioArrayBuffer(arrayBuffer);
+          const cleanName = file.name.replace(/\.[^/.]+$/, "");
+          await handleLoadRealAudio(payload, cleanName);
+          toast({
+            title: "Real SFX Imported",
+            description: `Loaded "${file.name}" into Workstation with seamless loop markers.`,
+            variant: "default",
+          });
+        } catch (err) {
+          console.error("Drag-drop decode error:", err);
+          toast({
+            title: "Audio Decode Error",
+            description: "Could not decode audio file.",
+            variant: "destructive",
+          });
+        }
+      }
     }
   };
 
@@ -376,7 +455,11 @@ export default function App() {
   });
 
   return (
-    <div className="h-screen max-h-screen w-screen overflow-hidden flex flex-col font-sans select-none bg-neutral-950 text-neutral-100">
+    <div
+      onDragOver={(e) => e.preventDefault()}
+      onDrop={handleWindowDrop}
+      className="h-screen max-h-screen w-screen overflow-hidden flex flex-col font-sans select-none bg-neutral-950 text-neutral-100"
+    >
       {/* Top Application Header (Clean minimal, menubar removed) */}
       <header className="h-14 px-4 sm:px-5 bg-neutral-900/90 border-b border-neutral-800/80 backdrop-blur-md flex items-center justify-between shrink-0 z-40 relative">
         {/* Top-Left: Logo & Branding moved here with logo-equalizer.png */}
@@ -405,6 +488,16 @@ export default function App() {
         <div className="flex items-center space-x-2 sm:space-x-3 shrink-0">
           {/* Quick Action Buttons */}
           <div className="flex items-center space-x-1.5">
+            {/* Pixabay Sound Effects Hub & Downloader Button */}
+            <button
+              onClick={() => setIsPixabayHubOpen(true)}
+              title="Open Pixabay & Real SFX Hub"
+              className="flex items-center space-x-1.5 px-2.5 py-1.5 rounded-xl text-xs font-semibold bg-emerald-500/15 hover:bg-emerald-500/25 text-emerald-300 border border-emerald-500/40 transition-all cursor-pointer shadow-xs"
+            >
+              <span className="text-sm">🌐</span>
+              <span className="hidden sm:inline">Pixabay SFX</span>
+            </button>
+
             <button
               onClick={handleMutate}
               title="Mutate current sound [M]"
@@ -459,12 +552,19 @@ export default function App() {
         {/* shadcn/ui Sidebar */}
         <AppSidebar
           currentCategory={params.category}
-          onSelectCategory={(cat) => setParams((p) => ({ ...p, category: cat }))}
+          onSelectCategory={(cat) => {
+            setIsRealAudioLoaded(false);
+            setParams((p) => ({ ...p, category: cat }));
+          }}
           presets={presets}
           selectedPresetId={selectedPresetId}
           onSelectPreset={handleSelectPreset}
           onOpenBatch={() => setIsBatchModalOpen(true)}
           onOpenExport={() => setIsExportModalOpen(true)}
+          onOpenPixabayHub={() => setIsPixabayHubOpen(true)}
+          realSounds={realSounds}
+          selectedRealSoundId={selectedRealSoundId}
+          onSelectRealSound={handleSelectRealSound}
           isCollapsed={isSidebarCollapsed}
           onToggleCollapse={() => setIsSidebarCollapsed(!isSidebarCollapsed)}
           theme={theme}
@@ -505,7 +605,10 @@ export default function App() {
             <div className="xl:col-span-7 min-w-0">
               <ParametricSynthRack
                 params={params}
-                onChange={setParams}
+                onChange={(newParams) => {
+                  setIsRealAudioLoaded(false);
+                  setParams(newParams);
+                }}
                 onMutate={handleMutate}
                 onRandomize={handleRandomize}
                 presets={presets}
@@ -602,6 +705,14 @@ export default function App() {
         isLoopEnabled={loopSettings.enabled}
         params={params}
         loopSettings={loopSettings}
+      />
+
+      <PixabayHubModal
+        isOpen={isPixabayHubOpen}
+        onClose={() => setIsPixabayHubOpen(false)}
+        onLoadRealAudio={handleLoadRealAudio}
+        bundledRealSounds={realSounds}
+        theme={theme}
       />
 
       {/* shadcn/ui Toaster component */}

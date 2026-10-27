@@ -1,0 +1,142 @@
+[
+  {
+    "id": "footstep_concrete",
+    "category": "footstep",
+    "name": "Concrete Footstep",
+    "file": "/sounds/footstep_concrete.mp3",
+    "duration": 4.79252
+  },
+  {
+    "id": "footstep_sand",
+    "category": "footstep",
+    "name": "Footstep on Sand",
+    "file": "/sounds/footstep_sand.mp3",
+    "duration": 85.0909
+  },
+  {
+    "id": "footstep_running",
+    "category": "footstep",
+    "name": "Running Footsteps",
+    "file": "/sounds/footstep_running.mp3",
+    "duration": 4.79252
+  },
+  {
+    "id": "whoosh_fast",
+    "category": "whoosh",
+    "name": "Fast Whoosh",
+    "file": "/sounds/whoosh_fast.mp3",
+    "duration": 1.9624
+  },
+  {
+    "id": "whoosh_cinematic",
+    "category": "whoosh",
+    "name": "Cinematic Whoosh Hit",
+    "file": "/sounds/whoosh_cinematic.mp3",
+    "duration": 41.1471
+  },
+  {
+    "id": "ui_notification",
+    "category": "ui",
+    "name": "Success Notification Ping",
+    "file": "/sounds/ui_notification.mp3",
+    "duration": 2.92875
+  },
+  {
+    "id": "ui_click",
+    "category": "ui",
+    "name": "Light Switch Click",
+    "file": "/sounds/ui_click.mp3",
+    "duration": 10.0534
+  },
+  {
+    "id": "ui_typing",
+    "category": "ui",
+    "name": "Laptop Keyboard Typing",
+    "file": "/sounds/ui_typing.mp3",
+    "duration": 55.8759
+  },
+  {
+    "id": "weather_rain",
+    "category": "weather",
+    "name": "Summer Thunderstorm Rain",
+    "file": "/sounds/weather_rain.mp3",
+    "duration": 48
+  },
+  {
+    "id": "weather_wind",
+    "category": "weather",
+    "name": "Desert Wind Breeze",
+    "file": "/sounds/weather_wind.mp3",
+    "duration": 2.5
+  },
+  {
+    "id": "impact_punch",
+    "category": "impact",
+    "name": "Heavy Punch Impact",
+    "file": "/sounds/impact_punch.mp3",
+    "duration": 1.18823
+  },
+  {
+    "id": "impact_hit",
+    "category": "impact",
+    "name": "Body Impact Hit",
+    "file": "/sounds/impact_hit.mp3",
+    "duration": 5.66857
+  },
+  {
+    "id": "explosion_cannon",
+    "category": "explosion",
+    "name": "Tank Cannon Blast",
+    "file": "/sounds/explosion_cannon.mp3",
+    "duration": 87.2812
+  },
+  {
+    "id": "explosion_fireworks",
+    "category": "explosion",
+    "name": "Fireworks Detonation",
+    "file": "/sounds/explosion_fireworks.mp3",
+    "duration": 5.48617
+  },
+  {
+    "id": "weapon_sword",
+    "category": "weapon",
+    "name": "Sword Unsheathe Metal",
+    "file": "/sounds/weapon_sword.mp3",
+    "duration": 1.01336
+  },
+  {
+    "id": "weapon_laser",
+    "category": "weapon",
+    "name": "Energy Laser Weapon",
+    "file": "/sounds/weapon_laser.mp3",
+    "duration": 49.1393
+  },
+  {
+    "id": "ambient_forest",
+    "category": "ambient",
+    "name": "Forest Birds Ambience",
+    "file": "/sounds/ambient_forest.mp3",
+    "duration": 63
+  },
+  {
+    "id": "ambient_drone",
+    "category": "ambient",
+    "name": "Deep Ambient Drone",
+    "file": "/sounds/ambient_drone.mp3",
+    "duration": 25.6
+  },
+  {
+    "id": "retro_menu",
+    "category": "retro",
+    "name": "Retro 8-Bit Menu",
+    "file": "/sounds/retro_menu.mp3",
+    "duration": 60.1401
+  },
+  {
+    "id": "retro_synth",
+    "category": "retro",
+    "name": "Vintage Synth Chime",
+    "file": "/sounds/retro_synth.mp3",
+    "duration": 59
+  }
+]
