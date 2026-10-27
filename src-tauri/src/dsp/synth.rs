@@ -83,6 +83,16 @@ pub struct SynthParams {
     pub stereo_spread: f32,
     #[serde(default)]
     pub echo: bool,
+    #[serde(default)]
+    pub footwear: String,
+    #[serde(default)]
+    pub movement: String,
+    #[serde(default)]
+    pub character_type: String,
+    #[serde(default)]
+    pub environment: String,
+    #[serde(default)]
+    pub foot_side: String,
 }
 
 /// Generates raw stereo audio buffers based on the procedural recipe
@@ -116,17 +126,28 @@ pub fn generate_sound(params: &SynthParams) -> (Vec<f32>, Vec<f32>) {
         _ => generate_impact(&mut left, &mut right, params, &mut rng, sr),
     }
 
-    // Apply Echo slapback effect (hallway / corridor / cavern / canyon acoustic reflection)
-    if params.echo {
-        let mut echo_delay = DelayEffect::new(params.sample_rate, 160.0, 0.42, 0.52);
-        let mut echo_filter_l = SvfFilter::new(3400.0, 1.0);
-        let mut echo_filter_r = SvfFilter::new(3400.0, 1.0);
+        // Apply Echo / Environmental reflections (Hallway, Stairwell, Warehouse, Cave, Cathedral, etc.)
+    let has_env_echo = params.echo || match params.environment.as_str() {
+        "hallway" | "stairwell" | "warehouse" | "cave" | "cathedral" => true,
+        _ => false,
+    };
+    if has_env_echo {
+        let (delay_ms, feedback, mix, lpf) = match params.environment.as_str() {
+            "cave" => (250.0, 0.55, 0.58, 2400.0),
+            "warehouse" => (210.0, 0.48, 0.52, 3800.0),
+            "stairwell" => (110.0, 0.45, 0.50, 4800.0),
+            "cathedral" => (300.0, 0.60, 0.60, 2800.0),
+            _ => (160.0, 0.42, 0.52, 3400.0), // hallway / default echo
+        };
+        let mut echo_delay = DelayEffect::new(params.sample_rate, delay_ms, feedback, mix);
+        let mut echo_filter_l = SvfFilter::new(lpf, 1.0);
+        let mut echo_filter_r = SvfFilter::new(lpf, 1.0);
         for i in 0..total_samples {
             let (dl, dr) = echo_delay.process(left[i], right[i]);
             let fl = echo_filter_l.process_lp(dl, sr);
             let fr = echo_filter_r.process_lp(dr, sr);
-            left[i] = left[i] * 0.72 + fl * 0.48;
-            right[i] = right[i] * 0.72 + fr * 0.48;
+            left[i] = left[i] * 0.70 + fl * 0.50;
+            right[i] = right[i] * 0.70 + fr * 0.50;
         }
     }
 

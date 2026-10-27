@@ -58,7 +58,7 @@ export const ParametricSynthRack: React.FC<ParametricSynthRackProps> = ({
     { id: "creature", name: "Creature", icon: IconCreature, color: "text-emerald-400" },
   ];
 
-  const materials = [
+    const materials = [
     { id: "metal", name: "Metal Resonance" },
     { id: "wood", name: "Wood Acoustic" },
     { id: "glass", name: "Glass Crystal" },
@@ -66,18 +66,100 @@ export const ParametricSynthRack: React.FC<ParametricSynthRackProps> = ({
     { id: "flesh", name: "Organic & Flesh" },
   ];
 
-  const footstepSurfaces = [
-    { id: "grass", name: "🌿 Grass & Lawn" },
-    { id: "sand", name: "🏖️ Sand & Dune" },
-    { id: "floor", name: "🏢 Tile & Concrete Floor" },
-    { id: "iron", name: "🔩 Iron Floor & Grate" },
-    { id: "wood", name: "🪵 Wooden Floor & Planks" },
-    { id: "mud", name: "💧 Wet Mud & Squelch" },
-    { id: "snow", name: "❄️ Crunchy Snow & Ice" },
-    { id: "carpet", name: "🧶 Plush Carpet & Rug" },
-    { id: "soft", name: "🌱 Soft Surface & Dirt" },
-    { id: "wet", name: "🌊 Wet Surface & Puddle" },
-    { id: "hard", name: "🪨 Hard Stone & Marble" },
+  // Comprehensive Footstep Taxonomy Matrix (Combinatorial Sound Designer)
+  const surfaceGroups = [
+    {
+      group: "Hard Surfaces",
+      icon: "🪨",
+      surfaces: [
+        { id: "concrete", name: "Concrete / Cement" },
+        { id: "marble", name: "Polished Marble / Granite" },
+        { id: "tile", name: "Ceramic Tiles" },
+        { id: "wood", name: "Wooden Floor / Parquet" },
+        { id: "creakywood", name: "Creaky Old Floorboard" },
+        { id: "metal", name: "Steel Plate / Catwalk" },
+        { id: "metalgrate", name: "Industrial Grated Metal" },
+        { id: "glass", name: "Glass Floor" },
+        { id: "brick", name: "Bricks / Cobblestone" },
+      ],
+    },
+    {
+      group: "Natural Ground",
+      icon: "🌿",
+      surfaces: [
+        { id: "grass", name: "Grass & Lawn" },
+        { id: "wetgrass", name: "Wet Grass & Dew" },
+        { id: "mud", name: "Wet Mud & Squelch" },
+        { id: "dirt", name: "Dry Dirt & Loose Soil" },
+        { id: "sand", name: "Dry Sand & Dunes" },
+        { id: "wetsand", name: "Wet Beach Sand" },
+        { id: "gravel", name: "Gravel & Pebbles" },
+        { id: "leaves", name: "Fallen Leaves" },
+        { id: "twigs", name: "Twigs & Branches" },
+        { id: "snow", name: "Crunchy Snow Crust" },
+        { id: "powdersnow", name: "Deep Powder Snow" },
+        { id: "ice", name: "Frozen Slippery Ice" },
+        { id: "shallowwater", name: "Puddles & Shallow Water" },
+        { id: "deepwater", name: "Deep Water Plunge" },
+      ],
+    },
+    {
+      group: "Indoor Surfaces",
+      icon: "🏢",
+      surfaces: [
+        { id: "carpet", name: "Plush Carpet & Rugs" },
+        { id: "linoleum", name: "Linoleum & Vinyl" },
+        { id: "rubber", name: "Rubber Flooring / Mats" },
+      ],
+    },
+    {
+      group: "Special & Sci-Fi",
+      icon: "🔮",
+      surfaces: [
+        { id: "crushedglass", name: "Crushed Glass Shards" },
+        { id: "alienorganic", name: "Alien Slime Membrane" },
+        { id: "scififloor", name: "Sci-Fi Magnetic Deck" },
+      ],
+    },
+  ];
+
+  const footwearOptions = [
+    { id: "boots", name: "🥾 Combat Boots", desc: "Rigid heavy lugged sole" },
+    { id: "sneakers", name: "👟 Running Sneakers", desc: "Cushioned rubber grip" },
+    { id: "highheels", name: "👠 High Heels", desc: "Sharp stiletto click-clack" },
+    { id: "dress", name: "👞 Dress Shoes", desc: "Polished hard leather sole" },
+    { id: "barefoot", name: "🦶 Bare Feet", desc: "Fleshy skin slap" },
+    { id: "clogs", name: "🪵 Wooden Clogs", desc: "Hollow wood knock" },
+    { id: "mech", name: "🤖 Armored Mech", desc: "Hydraulic servo & magnetic lock" },
+  ];
+
+  const movementOptions = [
+    { id: "walk", name: "🚶 Normal Walk" },
+    { id: "slow", name: "🐢 Slow Walk" },
+    { id: "sneak", name: "🥷 Sneak / Tiptoe" },
+    { id: "run", name: "🏃 Run / Sprint" },
+    { id: "stomp", name: "💥 Heavy Stomp" },
+    { id: "scuff", name: "👣 Scuff / Drag" },
+    { id: "land", name: "🦘 Jump Landing" },
+    { id: "stairs", name: "🪜 Stairs Step" },
+  ];
+
+  const characterOptions = [
+    { id: "standard", name: "Standard (75kg)" },
+    { id: "heavy", name: "Heavy / Giant (200kg+)" },
+    { id: "light", name: "Agile / Ninja (45kg)" },
+    { id: "armored", name: "Armored Soldier / Knight" },
+    { id: "robot", name: "Robotic Android / Mech" },
+  ];
+
+  const environmentOptions = [
+    { id: "dry", name: "Dry Studio" },
+    { id: "hallway", name: "Hallway Echo" },
+    { id: "stairwell", name: "Stairwell Slap" },
+    { id: "warehouse", name: "Warehouse Hall" },
+    { id: "cave", name: "Cavern Echo" },
+    { id: "outdoor", name: "Open Outdoor" },
+    { id: "cathedral", name: "Cathedral Vault" },
   ];
 
   const retroWaveforms = [
@@ -238,74 +320,253 @@ export const ParametricSynthRack: React.FC<ParametricSynthRackProps> = ({
             </div>
           )}
 
-          {/* Footstep Ground Surfaces & Echo Option */}
+          {/* Footstep Foley Combinatorial Sound Designer Matrix */}
           {params.category === "footstep" && (
-            <div className="space-y-2.5 pt-1 min-w-0">
-              <div className="flex items-center justify-between">
-                <span className="text-neutral-400 text-[11px] font-semibold uppercase tracking-wider">
-                  Ground Surface Material
-                </span>
-                <span className="text-[10px] font-mono text-emerald-400 bg-emerald-950/50 px-2 py-0.5 rounded border border-emerald-800/50">
-                  {footstepSurfaces.find((s) => s.id === params.material_preset)?.name || "Surface"}
-                </span>
-              </div>
-
-              <Select
-                value={params.material_preset}
-                onValueChange={(val) => updateField("material_preset", val)}
-              >
-                <SelectTrigger className="h-8 text-xs bg-neutral-950 border-neutral-800 text-emerald-300 w-full">
-                  <SelectValue placeholder="Select Ground Surface" />
-                </SelectTrigger>
-                <SelectContent className="max-h-60">
-                  {footstepSurfaces.map((s) => (
-                    <SelectItem key={s.id} value={s.id}>
-                      {s.name}
-                    </SelectItem>
-                  ))}
-                </SelectContent>
-              </Select>
-
-              {/* Surface Quick-Select Chips */}
-              <div className="grid grid-cols-2 sm:grid-cols-3 xl:grid-cols-4 gap-1 pt-0.5">
-                {footstepSurfaces.map((s) => {
-                  const active = params.material_preset === s.id;
-                  return (
+            <div className="space-y-4 pt-1 min-w-0">
+              {/* Dynamic Sound Recipe & Stride Bar */}
+              <div className="p-3 rounded-xl bg-gradient-to-r from-emerald-950/70 via-neutral-900 to-teal-950/70 border border-emerald-800/60 shadow-md space-y-2">
+                <div className="flex items-center justify-between text-[11px]">
+                  <span className="font-semibold text-emerald-300 uppercase tracking-wider flex items-center space-x-1.5">
+                    <span className="w-2 h-2 rounded-full bg-emerald-400 animate-pulse" />
+                    <span>Active Foley Recipe</span>
+                  </span>
+                  <div className="flex items-center space-x-1.5">
                     <button
-                      key={s.id}
                       type="button"
-                      onClick={() => updateField("material_preset", s.id)}
-                      className={`px-2 py-1 text-[10px] font-medium rounded-lg truncate transition-all cursor-pointer text-left ${
-                        active
-                          ? "bg-emerald-500/25 text-emerald-300 border border-emerald-500/50 shadow-xs font-semibold"
-                          : "bg-neutral-900/60 text-neutral-400 hover:text-neutral-200 hover:bg-neutral-800/60 border border-neutral-800/60"
+                      onClick={() => updateField("foot_side", "left")}
+                      className={`px-2 py-0.5 rounded text-[10px] font-bold transition-all cursor-pointer ${
+                        params.foot_side === "left"
+                          ? "bg-emerald-500 text-white shadow-xs"
+                          : "bg-neutral-800 text-neutral-400 hover:text-neutral-200"
                       }`}
-                      title={s.name}
                     >
-                      {s.name}
+                      Left Foot
                     </button>
-                  );
-                })}
+                    <button
+                      type="button"
+                      onClick={() => updateField("foot_side", "right")}
+                      className={`px-2 py-0.5 rounded text-[10px] font-bold transition-all cursor-pointer ${
+                        params.foot_side === "right"
+                          ? "bg-emerald-500 text-white shadow-xs"
+                          : "bg-neutral-800 text-neutral-400 hover:text-neutral-200"
+                      }`}
+                    >
+                      Right Foot
+                    </button>
+                  </div>
+                </div>
+
+                <div className="text-xs font-mono text-neutral-200 bg-neutral-950/80 p-2 rounded-lg border border-neutral-800/90 leading-relaxed select-text">
+                  <span className="text-emerald-400 font-bold capitalize">
+                    {movementOptions.find((m) => m.id === (params.movement || "walk"))?.name.replace(/^[^s]+s+/, "") || "Walk"}
+                  </span>
+                  {" with "}
+                  <span className="text-cyan-300 font-bold">
+                    {footwearOptions.find((f) => f.id === (params.footwear || "boots"))?.name.replace(/^[^s]+s+/, "") || "Combat Boots"}
+                  </span>
+                  {" on "}
+                  <span className="text-amber-300 font-bold">
+                    {surfaceGroups.flatMap((g) => g.surfaces).find((s) => s.id === params.material_preset)?.name || params.material_preset || "Concrete"}
+                  </span>
+                  {" ("}
+                  <span className="text-purple-300">
+                    {characterOptions.find((c) => c.id === (params.character_type || "standard"))?.name || "Standard Human"}
+                  </span>
+                  {", "}
+                  <span className="text-rose-300 font-semibold uppercase">
+                    {(params.foot_side || "left") === "left" ? "Left Foot" : "Right Foot"}
+                  </span>
+                  {", "}
+                  <span className="text-teal-300">
+                    {environmentOptions.find((e) => e.id === (params.environment || "dry"))?.name || "Dry Studio"}
+                  </span>
+                  {params.echo ? ", Echo ON" : ""}
+                  {")"}
+                </div>
+
+                {/* Stride Sequencer Button: Alternates L/R with natural variation */}
+                <div className="flex items-center space-x-2 pt-1">
+                  <button
+                    type="button"
+                    onClick={() => {
+                      const nextSide = (params.foot_side || "left") === "left" ? "right" : "left";
+                      const nextSeed = (params.seed + 1) % 100000;
+                      onChange({
+                        ...params,
+                        foot_side: nextSide,
+                        seed: nextSeed,
+                      });
+                    }}
+                    className="flex-1 py-1.5 px-3 rounded-lg text-xs font-bold bg-emerald-500 hover:bg-emerald-400 text-neutral-950 shadow-md shadow-emerald-500/20 transition-all cursor-pointer flex items-center justify-center space-x-2"
+                  >
+                    <span>🦶 Next Stride Step (Auto-Alternate L/R)</span>
+                  </button>
+                  <button
+                    type="button"
+                    onClick={() => updateField("echo", !params.echo)}
+                    className={`px-3 py-1.5 rounded-lg text-xs font-bold transition-all cursor-pointer border flex items-center space-x-1.5 shrink-0 ${
+                      params.echo
+                        ? "bg-teal-500/20 text-teal-300 border-teal-500/50 shadow-xs"
+                        : "bg-neutral-900 text-neutral-400 hover:text-neutral-200 border-neutral-800"
+                    }`}
+                  >
+                    <span className={`w-1.5 h-1.5 rounded-full ${params.echo ? "bg-teal-400 animate-pulse" : "bg-neutral-500"}`} />
+                    <span>{params.echo ? "Echo ON" : "Echo OFF"}</span>
+                  </button>
+                </div>
               </div>
 
-              {/* Echo On / Off Option Toggle */}
-              <div className="p-2.5 rounded-xl bg-neutral-900/90 border border-neutral-800 flex items-center justify-between shadow-xs">
-                <div className="flex flex-col pr-2">
-                  <span className="text-[11px] font-semibold text-neutral-200">Acoustic Echo Slapback</span>
-                  <span className="text-[9px] text-neutral-400">Hallway / corridor acoustic reflection</span>
+              {/* 1. Surface Material Groups */}
+              <div className="space-y-2">
+                <div className="flex justify-between items-center">
+                  <span className="text-[11px] font-semibold uppercase tracking-wider text-neutral-400">
+                    1. Ground Surface Material
+                  </span>
+                  <span className="text-[10px] font-mono text-emerald-400">
+                    {surfaceGroups.flatMap((g) => g.surfaces).find((s) => s.id === params.material_preset)?.name || "Select Surface"}
+                  </span>
                 </div>
-                <button
-                  type="button"
-                  onClick={() => updateField("echo", !params.echo)}
-                  className={`px-3 py-1.5 rounded-lg text-xs font-bold transition-all cursor-pointer flex items-center space-x-1.5 shrink-0 ${
-                    params.echo
-                      ? "bg-emerald-500 text-white shadow-md shadow-emerald-500/25 border border-emerald-400"
-                      : "bg-neutral-800 text-neutral-400 hover:text-neutral-200 border border-neutral-700"
-                  }`}
-                >
-                  <span className={`w-2 h-2 rounded-full ${params.echo ? "bg-white animate-pulse" : "bg-neutral-500"}`} />
-                  <span>{params.echo ? "ECHO ON" : "ECHO OFF"}</span>
-                </button>
+
+                <div className="space-y-2">
+                  {surfaceGroups.map((g) => (
+                    <div key={g.group} className="space-y-1">
+                      <div className="text-[10px] font-semibold text-neutral-500 uppercase tracking-wider flex items-center space-x-1">
+                        <span>{g.icon}</span>
+                        <span>{g.group}</span>
+                      </div>
+                      <div className="grid grid-cols-2 sm:grid-cols-3 gap-1">
+                        {g.surfaces.map((s) => {
+                          const active = params.material_preset === s.id;
+                          return (
+                            <button
+                              key={s.id}
+                              type="button"
+                              onClick={() => updateField("material_preset", s.id)}
+                              className={`px-2 py-1 text-[10px] rounded-lg truncate transition-all cursor-pointer text-left ${
+                                active
+                                  ? "bg-emerald-500/25 text-emerald-300 border border-emerald-500/60 shadow-xs font-semibold"
+                                  : "bg-neutral-900/60 text-neutral-400 hover:text-neutral-200 hover:bg-neutral-800/60 border border-neutral-800/60"
+                              }`}
+                              title={s.name}
+                            >
+                              {s.name}
+                            </button>
+                          );
+                        })}
+                      </div>
+                    </div>
+                  ))}
+                </div>
+              </div>
+
+              {/* 2. Footwear & Sole Type */}
+              <div className="space-y-1.5 pt-1">
+                <div className="flex justify-between items-center">
+                  <span className="text-[11px] font-semibold uppercase tracking-wider text-neutral-400">
+                    2. Footwear & Sole
+                  </span>
+                  <span className="text-[10px] font-mono text-cyan-300">
+                    {footwearOptions.find((f) => f.id === (params.footwear || "boots"))?.name}
+                  </span>
+                </div>
+                <div className="grid grid-cols-2 sm:grid-cols-3 gap-1">
+                  {footwearOptions.map((f) => {
+                    const active = (params.footwear || "boots") === f.id;
+                    return (
+                      <button
+                        key={f.id}
+                        type="button"
+                        onClick={() => updateField("footwear", f.id)}
+                        className={`px-2 py-1 text-[10px] rounded-lg truncate transition-all cursor-pointer text-left ${
+                          active
+                            ? "bg-cyan-500/25 text-cyan-300 border border-cyan-500/60 shadow-xs font-semibold"
+                            : "bg-neutral-900/60 text-neutral-400 hover:text-neutral-200 hover:bg-neutral-800/60 border border-neutral-800/60"
+                        }`}
+                        title={f.desc}
+                      >
+                        {f.name}
+                      </button>
+                    );
+                  })}
+                </div>
+              </div>
+
+              {/* 3. Movement Style */}
+              <div className="space-y-1.5 pt-1">
+                <div className="flex justify-between items-center">
+                  <span className="text-[11px] font-semibold uppercase tracking-wider text-neutral-400">
+                    3. Movement Style
+                  </span>
+                  <span className="text-[10px] font-mono text-amber-300">
+                    {movementOptions.find((m) => m.id === (params.movement || "walk"))?.name}
+                  </span>
+                </div>
+                <div className="grid grid-cols-2 sm:grid-cols-4 gap-1">
+                  {movementOptions.map((m) => {
+                    const active = (params.movement || "walk") === m.id;
+                    return (
+                      <button
+                        key={m.id}
+                        type="button"
+                        onClick={() => updateField("movement", m.id)}
+                        className={`px-2 py-1 text-[10px] rounded-lg truncate transition-all cursor-pointer text-left ${
+                          active
+                            ? "bg-amber-500/25 text-amber-300 border border-amber-500/60 shadow-xs font-semibold"
+                            : "bg-neutral-900/60 text-neutral-400 hover:text-neutral-200 hover:bg-neutral-800/60 border border-neutral-800/60"
+                        }`}
+                      >
+                        {m.name}
+                      </button>
+                    );
+                  })}
+                </div>
+              </div>
+
+              {/* 4. Character Weight & Environment Columns */}
+              <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 pt-1">
+                {/* Character */}
+                <div className="space-y-1.5">
+                  <span className="text-[11px] font-semibold uppercase tracking-wider text-neutral-400">
+                    4. Character Weight
+                  </span>
+                  <Select
+                    value={params.character_type || "standard"}
+                    onValueChange={(val) => updateField("character_type", val)}
+                  >
+                    <SelectTrigger className="h-8 text-xs bg-neutral-950 border-neutral-800 text-purple-300 w-full">
+                      <SelectValue placeholder="Character Body" />
+                    </SelectTrigger>
+                    <SelectContent>
+                      {characterOptions.map((c) => (
+                        <SelectItem key={c.id} value={c.id}>
+                          {c.name}
+                        </SelectItem>
+                      ))}
+                    </SelectContent>
+                  </Select>
+                </div>
+
+                {/* Environment Space */}
+                <div className="space-y-1.5">
+                  <span className="text-[11px] font-semibold uppercase tracking-wider text-neutral-400">
+                    5. Acoustic Space
+                  </span>
+                  <Select
+                    value={params.environment || "dry"}
+                    onValueChange={(val) => updateField("environment", val)}
+                  >
+                    <SelectTrigger className="h-8 text-xs bg-neutral-950 border-neutral-800 text-teal-300 w-full">
+                      <SelectValue placeholder="Environment Space" />
+                    </SelectTrigger>
+                    <SelectContent>
+                      {environmentOptions.map((e) => (
+                        <SelectItem key={e.id} value={e.id}>
+                          {e.name}
+                        </SelectItem>
+                      ))}
+                    </SelectContent>
+                  </Select>
+                </div>
               </div>
             </div>
           )}

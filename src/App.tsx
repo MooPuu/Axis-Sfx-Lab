@@ -52,6 +52,11 @@ const DEFAULT_PARAMS: SynthParams = {
   reverb_decay: 0.6,
   stereo_spread: 0.5,
   echo: false,
+  footwear: "boots",
+  movement: "walk",
+  character_type: "standard",
+  environment: "dry",
+  foot_side: "left",
 };
 
 const DEFAULT_LOOP: LoopSettings = {

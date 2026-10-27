@@ -25,6 +25,11 @@ export interface SynthParams {
   reverb_decay: number;
   stereo_spread: number;
   echo?: boolean;
+  footwear?: string;
+  movement?: string;
+  character_type?: string;
+  environment?: string;
+  foot_side?: string;
 }
 
 export interface LoopSettings {
