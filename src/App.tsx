@@ -81,6 +81,7 @@ export default function App() {
   const [audioPayload, setAudioPayload] = useState<ProcessedAudioPayload | null>(null);
   const [presets, setPresets] = useState<PresetInfo[]>([]);
   const [selectedPresetId, setSelectedPresetId] = useState<string>("impact_metal_pipe");
+  const [libraryMode, setLibraryMode] = useState<"dsp" | "real">("dsp");
 
   // Real Studio & Pixabay audio state
   const [isPixabayHubOpen, setIsPixabayHubOpen] = useState<boolean>(false);
@@ -339,19 +340,70 @@ export default function App() {
     });
   };
 
+  // Switch Library Mode (DSP Synth vs Real SFX)
+  const handleSelectLibraryMode = (mode: "dsp" | "real") => {
+    setLibraryMode(mode);
+    setParams((prev) => ({
+      ...prev,
+      real_sfx_mode: mode === "real",
+    }));
+    toast({
+      title: mode === "real" ? "🎙️ Real SFX Mode Active" : "🎛️ DSP Synth Mode Active",
+      description:
+        mode === "real"
+          ? "All 838 presets now synthesize with authentic acoustic studio simulation and foley warmth."
+          : "Procedural synthesis engine engaged across all 13 sound categories.",
+      variant: "default",
+    });
+  };
+
   // Load Preset
   const handleSelectPreset = (presetId: string) => {
-    setIsRealAudioLoaded(false);
     setSelectedPresetId(presetId);
     const found = presets.find((p) => p.id === presetId);
-    if (found) {
-      setParams(found.params);
+    if (!found) return;
+
+    if (libraryMode === "real") {
+      // Check if a real studio recording matches this preset
+      const matching = realSounds.find(
+        (s) =>
+          s.id === found.id ||
+          s.name.toLowerCase() === found.name.toLowerCase() ||
+          s.name.toLowerCase().includes(found.name.toLowerCase()) ||
+          found.name.toLowerCase().includes(s.name.toLowerCase())
+      );
+
+      if (matching) {
+        handleSelectRealSound(matching);
+        return;
+      }
+
+      setIsRealAudioLoaded(false);
+      setParams({
+        ...found.params,
+        real_sfx_mode: true,
+      });
       setActiveSoundTitle(found.name);
       if (found.is_loop !== undefined) {
         setLoopSettings((prev) => ({ ...prev, enabled: Boolean(found.is_loop) }));
       }
       toast({
-        title: "Preset Loaded",
+        title: "Real SFX Preset Loaded",
+        description: `Loaded "${found.name}" with authentic physical acoustics (${found.subcategory || found.category}).`,
+        variant: "default",
+      });
+    } else {
+      setIsRealAudioLoaded(false);
+      setParams({
+        ...found.params,
+        real_sfx_mode: false,
+      });
+      setActiveSoundTitle(found.name);
+      if (found.is_loop !== undefined) {
+        setLoopSettings((prev) => ({ ...prev, enabled: Boolean(found.is_loop) }));
+      }
+      toast({
+        title: "DSP Synth Preset Loaded",
         description: `Loaded "${found.name}" (${found.subcategory || found.category}).`,
         variant: "default",
       });
@@ -458,11 +510,17 @@ export default function App() {
     <div
       onDragOver={(e) => e.preventDefault()}
       onDrop={handleWindowDrop}
-      className="h-screen max-h-screen w-screen overflow-hidden flex flex-col font-sans select-none bg-neutral-950 text-neutral-100"
+      className={`h-screen max-h-screen w-screen overflow-hidden flex flex-col font-sans select-none ${
+        theme === "dark" ? "bg-neutral-950 text-neutral-100" : "bg-slate-100 text-slate-900"
+      }`}
     >
       {/* Top Application Header (Clean minimal, menubar removed) */}
-      <header className="h-14 px-4 sm:px-5 bg-neutral-900/90 border-b border-neutral-800/80 backdrop-blur-md flex items-center justify-between shrink-0 z-40 relative">
-        {/* Top-Left: Logo & Branding moved here with logo-equalizer.png */}
+      <header
+        className={`h-14 px-4 sm:px-5 border-b backdrop-blur-md flex items-center justify-between shrink-0 z-40 relative ${
+          theme === "dark" ? "bg-neutral-900/90 border-neutral-800/80" : "bg-white/95 border-slate-200 shadow-xs"
+        }`}
+      >
+        {/* Top-Left: Logo & Branding with logo-equalizer.png */}
         <div className="flex items-center space-x-2.5 shrink-0 select-none">
           <img
             src="/logo-equalizer.png"
@@ -470,8 +528,20 @@ export default function App() {
             className="h-7 w-auto object-contain rounded-md shadow-sm"
           />
           <div className="flex flex-col justify-center">
-            <span className="text-xs font-bold tracking-tight text-neutral-100 leading-none">Axis SFX Lab</span>
-            <span className="text-[10px] text-neutral-400 font-medium leading-tight mt-0.5">Mahdi Kareem © 2026</span>
+            <span
+              className={`text-xs font-bold tracking-tight leading-none ${
+                theme === "dark" ? "text-neutral-100" : "text-slate-900"
+              }`}
+            >
+              Axis SFX Lab
+            </span>
+            <span
+              className={`text-[10px] font-medium leading-tight mt-0.5 ${
+                theme === "dark" ? "text-neutral-400" : "text-slate-600 font-semibold"
+              }`}
+            >
+              Mahdi Kareem © 2026
+            </span>
           </div>
         </div>
 
@@ -492,7 +562,11 @@ export default function App() {
             <button
               onClick={() => setIsPixabayHubOpen(true)}
               title="Open Pixabay & Real SFX Hub"
-              className="flex items-center space-x-1.5 px-2.5 py-1.5 rounded-xl text-xs font-semibold bg-emerald-500/15 hover:bg-emerald-500/25 text-emerald-300 border border-emerald-500/40 transition-all cursor-pointer shadow-xs"
+              className={`flex items-center space-x-1.5 px-2.5 py-1.5 rounded-xl text-xs font-semibold border transition-all cursor-pointer shadow-xs ${
+                theme === "dark"
+                  ? "bg-emerald-500/15 hover:bg-emerald-500/25 text-emerald-300 border-emerald-500/40"
+                  : "bg-emerald-50 hover:bg-emerald-100 text-emerald-800 border-emerald-300 font-bold"
+              }`}
             >
               <span className="text-sm">🌐</span>
               <span className="hidden sm:inline">Pixabay SFX</span>
@@ -501,7 +575,11 @@ export default function App() {
             <button
               onClick={handleMutate}
               title="Mutate current sound [M]"
-              className="flex items-center space-x-1 px-2.5 py-1.5 rounded-xl text-xs font-medium bg-neutral-950/60 hover:bg-neutral-800 text-amber-300 border border-neutral-800 hover:border-amber-500/40 transition-all cursor-pointer"
+              className={`flex items-center space-x-1 px-2.5 py-1.5 rounded-xl text-xs font-medium border transition-all cursor-pointer ${
+                theme === "dark"
+                  ? "bg-neutral-950/60 hover:bg-neutral-800 text-amber-300 border-neutral-800 hover:border-amber-500/40"
+                  : "bg-amber-50 hover:bg-amber-100 text-amber-800 border-amber-300 font-semibold shadow-xs"
+              }`}
             >
               <IconSparkles size={14} />
               <span className="hidden sm:inline">Mutate</span>
@@ -510,7 +588,11 @@ export default function App() {
             <button
               onClick={handleRandomize}
               title="Randomize parameters [R]"
-              className="flex items-center space-x-1 px-2.5 py-1.5 rounded-xl text-xs font-medium bg-neutral-950/60 hover:bg-neutral-800 text-purple-300 border border-neutral-800 hover:border-purple-500/40 transition-all cursor-pointer"
+              className={`flex items-center space-x-1 px-2.5 py-1.5 rounded-xl text-xs font-medium border transition-all cursor-pointer ${
+                theme === "dark"
+                  ? "bg-neutral-950/60 hover:bg-neutral-800 text-purple-300 border-neutral-800 hover:border-purple-500/40"
+                  : "bg-purple-50 hover:bg-purple-100 text-purple-800 border-purple-300 font-semibold shadow-xs"
+              }`}
             >
               <IconDice size={14} />
               <span className="hidden sm:inline">Random</span>
@@ -519,7 +601,11 @@ export default function App() {
             <button
               onClick={() => setIsBatchModalOpen(true)}
               title="Generate batch variation bank"
-              className="flex items-center space-x-1 px-2.5 py-1.5 rounded-xl text-xs font-medium bg-indigo-950/50 hover:bg-indigo-900/60 text-indigo-200 border border-indigo-800/60 transition-all cursor-pointer"
+              className={`flex items-center space-x-1 px-2.5 py-1.5 rounded-xl text-xs font-medium border transition-all cursor-pointer ${
+                theme === "dark"
+                  ? "bg-indigo-950/50 hover:bg-indigo-900/60 text-indigo-200 border-indigo-800/60"
+                  : "bg-indigo-50 hover:bg-indigo-100 text-indigo-800 border-indigo-300 font-semibold shadow-xs"
+              }`}
             >
               <IconLayers size={14} />
               <span className="hidden sm:inline">Batch</span>
@@ -536,12 +622,20 @@ export default function App() {
           </div>
 
           {/* Uiverse.io Checkbox by catraco (dry-robin-61) for Mute/Unmute */}
-          <div className="flex items-center pl-1 sm:pl-2 border-l border-neutral-800">
+          <div
+            className={`flex items-center pl-1 sm:pl-2 border-l ${
+              theme === "dark" ? "border-neutral-800" : "border-slate-300"
+            }`}
+          >
             <MuteCheckbox isMuted={isMuted} onToggle={handleToggleMute} />
           </div>
 
           {/* Uiverse.io Button by metanef (stupid-horse-86) placed in top right corner */}
-          <div className="pl-1 sm:pl-2 border-l border-neutral-800">
+          <div
+            className={`pl-1 sm:pl-2 border-l ${
+              theme === "dark" ? "border-neutral-800" : "border-slate-300"
+            }`}
+          >
             <ThemeSwitch theme={theme} onToggle={handleToggleTheme} />
           </div>
         </div>
@@ -568,6 +662,8 @@ export default function App() {
           isCollapsed={isSidebarCollapsed}
           onToggleCollapse={() => setIsSidebarCollapsed(!isSidebarCollapsed)}
           theme={theme}
+          libraryMode={libraryMode}
+          onSelectLibraryMode={handleSelectLibraryMode}
         />
 
         {/* Studio Content Area (Fluid & responsive, scalable to any window size) */}

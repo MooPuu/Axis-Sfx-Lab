@@ -34,6 +34,8 @@ interface AppSidebarProps {
   isCollapsed: boolean;
   onToggleCollapse: () => void;
   theme: "dark" | "light";
+  libraryMode?: "dsp" | "real";
+  onSelectLibraryMode?: (mode: "dsp" | "real") => void;
 }
 
 export const AppSidebar: React.FC<AppSidebarProps> = ({
@@ -51,11 +53,20 @@ export const AppSidebar: React.FC<AppSidebarProps> = ({
   isCollapsed,
   onToggleCollapse,
   theme,
+  libraryMode,
+  onSelectLibraryMode,
 }) => {
-  const [libraryMode, setLibraryMode] = useState<"dsp" | "real">("dsp");
+  const [internalMode, setInternalMode] = useState<"dsp" | "real">("dsp");
+  const activeMode = libraryMode !== undefined ? libraryMode : internalMode;
+  const [realSubTab, setRealSubTab] = useState<"all" | "studio">("all");
   const [searchTerm, setSearchTerm] = useState("");
   const [selectedSubcategory, setSelectedSubcategory] = useState<string>("All");
   const [filterType, setFilterType] = useState<"all" | "oneshot" | "loop">("all");
+
+  const handleSetMode = (mode: "dsp" | "real") => {
+    setInternalMode(mode);
+    onSelectLibraryMode?.(mode);
+  };
 
   const categories = useMemo(
     () => [
@@ -159,11 +170,17 @@ export const AppSidebar: React.FC<AppSidebarProps> = ({
             <span
               className={`text-[10px] font-mono px-1.5 py-0.5 rounded-full border ${
                 theme === "dark"
-                  ? "bg-neutral-800 text-neutral-400 border-neutral-700"
-                  : "bg-slate-200 text-slate-700 border-slate-300"
+                  ? activeMode === "real"
+                    ? "bg-emerald-950/40 text-emerald-400 border-emerald-800/50"
+                    : "bg-neutral-800 text-neutral-400 border-neutral-700"
+                  : activeMode === "real"
+                  ? "bg-emerald-100 text-emerald-800 border-emerald-300 font-bold"
+                  : "bg-slate-200 text-slate-700 border-slate-300 font-bold"
               }`}
             >
-              {libraryMode === "real" ? `${realSounds.length} Real SFX` : "13 Engines"}
+              {activeMode === "real"
+                ? `${presets.length} Real SFX`
+                : `${presets.length} Synth SFX`}
             </span>
           </div>
         )}
@@ -199,51 +216,88 @@ export const AppSidebar: React.FC<AppSidebarProps> = ({
       <div className="flex-1 overflow-y-auto overflow-x-hidden p-3 space-y-4">
         {/* Mode Selector: Procedural DSP vs Real Studio Audio */}
         {!isCollapsed && (
-          <div className="grid grid-cols-2 p-1 rounded-xl bg-neutral-950/70 border border-neutral-800/80 text-[11px] font-semibold">
-            <button
-              onClick={() => setLibraryMode("dsp")}
-              className={`py-1.5 rounded-lg transition-all cursor-pointer flex items-center justify-center space-x-1 ${
-                libraryMode === "dsp"
-                  ? theme === "dark"
-                    ? "bg-neutral-800 text-white font-bold shadow-xs border border-neutral-700"
-                    : "bg-white text-slate-900 font-bold shadow-xs border border-slate-300"
-                  : "text-neutral-400 hover:text-neutral-200"
-              }`}
-            >
-              <span>🎛️</span>
-              <span>DSP Synth</span>
-            </button>
-            <button
-              onClick={() => setLibraryMode("real")}
-              className={`py-1.5 rounded-lg transition-all cursor-pointer flex items-center justify-center space-x-1 ${
-                libraryMode === "real"
-                  ? "bg-emerald-500 text-neutral-950 font-bold shadow-xs"
-                  : "text-emerald-400 hover:text-emerald-300"
-              }`}
-            >
-              <span>🎙️</span>
-              <span>Real SFX ({realSounds.length})</span>
-            </button>
+          <div className="space-y-2">
+            <div className="grid grid-cols-2 p-1 rounded-xl bg-neutral-950/70 border border-neutral-800/80 text-[11px] font-semibold">
+              <button
+                onClick={() => handleSetMode("dsp")}
+                className={`py-1.5 rounded-lg transition-all cursor-pointer flex items-center justify-center space-x-1 ${
+                  activeMode === "dsp"
+                    ? theme === "dark"
+                      ? "bg-neutral-800 text-white font-bold shadow-xs border border-neutral-700"
+                      : "bg-white text-slate-900 font-bold shadow-xs border border-slate-300"
+                    : "text-neutral-400 hover:text-neutral-200"
+                }`}
+              >
+                <span>🎛️</span>
+                <span>DSP Synth ({presets.length})</span>
+              </button>
+              <button
+                onClick={() => handleSetMode("real")}
+                className={`py-1.5 rounded-lg transition-all cursor-pointer flex items-center justify-center space-x-1 ${
+                  activeMode === "real"
+                    ? "bg-emerald-500 text-neutral-950 font-bold shadow-xs"
+                    : "text-emerald-400 hover:text-emerald-300"
+                }`}
+              >
+                <span>🎙️</span>
+                <span>Real SFX ({presets.length})</span>
+              </button>
+            </div>
+
+            {/* In Real SFX mode: Sub-Navigation between 838 Presets vs Studio Audio */}
+            {activeMode === "real" && (
+              <div className="flex items-center justify-between p-1 bg-emerald-950/25 border border-emerald-500/30 rounded-lg text-[10px]">
+                <div className="flex items-center space-x-1">
+                  <button
+                    onClick={() => setRealSubTab("all")}
+                    className={`px-2 py-0.5 rounded font-semibold transition-all cursor-pointer ${
+                      realSubTab === "all"
+                        ? "bg-emerald-500 text-neutral-950 font-bold"
+                        : "text-emerald-400 hover:text-emerald-200"
+                    }`}
+                  >
+                    All {presets.length} Presets
+                  </button>
+                  <button
+                    onClick={() => setRealSubTab("studio")}
+                    className={`px-2 py-0.5 rounded font-semibold transition-all cursor-pointer ${
+                      realSubTab === "studio"
+                        ? "bg-emerald-500 text-neutral-950 font-bold"
+                        : "text-emerald-400 hover:text-emerald-200"
+                    }`}
+                  >
+                    ⭐ Studio ({realSounds.length})
+                  </button>
+                </div>
+                <button
+                  onClick={onOpenPixabayHub}
+                  title="Search and import cloud sounds from Pixabay"
+                  className="px-1.5 py-0.5 rounded text-[9.5px] font-bold bg-emerald-500/25 text-emerald-300 hover:bg-emerald-500 hover:text-neutral-950 transition-all cursor-pointer"
+                >
+                  🌐 Cloud SFX
+                </button>
+              </div>
+            )}
           </div>
         )}
 
-        {/* MODE A: REAL STUDIO AUDIO (PIXABAY / STUDIO SAMPLES) */}
-        {libraryMode === "real" && !isCollapsed ? (
+        {/* MODE A (SUB-TAB): REAL STUDIO RECORDED AUDIO */}
+        {activeMode === "real" && realSubTab === "studio" && !isCollapsed ? (
           <div className="space-y-3">
             <div className="flex items-center justify-between px-1">
               <div>
                 <span className="text-[10px] font-bold uppercase tracking-wider text-emerald-400 block">
-                  Studio Sound Library
+                  Studio Sound Vault
                 </span>
                 <span className="text-[9px] text-neutral-500 block">
-                  Real Acoustic Recordings
+                  Authentic Studio Recordings ({filteredRealSounds.length})
                 </span>
               </div>
               <button
                 onClick={onOpenPixabayHub}
                 className="px-2 py-0.5 rounded text-[10px] font-bold bg-emerald-500/20 text-emerald-400 border border-emerald-500/40 hover:bg-emerald-500 hover:text-neutral-950 transition-all cursor-pointer"
               >
-                + More
+                + Cloud SFX
               </button>
             </div>
 
@@ -281,7 +335,7 @@ export const AppSidebar: React.FC<AppSidebarProps> = ({
                     <div className="flex items-center justify-between w-full">
                       <span className="font-semibold truncate">{item.name}</span>
                       <span className="text-[10px] text-emerald-400 font-mono ml-1">
-                        ● Real SFX
+                        ● Studio WAV
                       </span>
                     </div>
                     <div className="flex items-center justify-between text-[9px] opacity-70">
@@ -294,7 +348,7 @@ export const AppSidebar: React.FC<AppSidebarProps> = ({
             </div>
           </div>
         ) : (
-          /* MODE B: PROCEDURAL SYNTHESIZER ENGINES (13 ENGINES & PRESET VAULT) */
+          /* MODE B: 13 ENGINES & ALL 838 PRESETS (SUPPORTED IN BOTH DSP AND REAL SFX MODES) */
           <>
             {/* Categories Section */}
             <div>
@@ -304,7 +358,9 @@ export const AppSidebar: React.FC<AppSidebarProps> = ({
                     theme === "dark" ? "text-neutral-400" : "text-slate-500"
                   }`}
                 >
-                  <span>Level 1 · Synthesizer Engines</span>
+                  <span>
+                    Level 1 · {activeMode === "real" ? "Real SFX Engines" : "Synthesizer Engines"}
+                  </span>
                   <span className="font-mono">{presets.length} Presets</span>
                 </div>
               )}
@@ -327,7 +383,11 @@ export const AppSidebar: React.FC<AppSidebarProps> = ({
                       title={`${c.name} (${count} presets)`}
                       className={`w-full flex items-center justify-between px-2.5 py-1.5 rounded-xl text-xs font-medium transition-all cursor-pointer ${
                         active
-                          ? theme === "dark"
+                          ? activeMode === "real"
+                            ? theme === "dark"
+                              ? "bg-emerald-950/50 text-emerald-200 shadow-sm border border-emerald-500/50 font-bold"
+                              : "bg-emerald-50 text-emerald-950 shadow-sm border border-emerald-400 font-bold"
+                            : theme === "dark"
                             ? "bg-neutral-800/95 text-white shadow-sm border border-neutral-700/60"
                             : "bg-white text-slate-900 shadow-sm border border-slate-300 font-semibold"
                           : theme === "dark"
@@ -340,7 +400,9 @@ export const AppSidebar: React.FC<AppSidebarProps> = ({
                           size={16}
                           className={
                             active
-                              ? c.color
+                              ? activeMode === "real"
+                                ? "text-emerald-400"
+                                : c.color
                               : theme === "dark"
                               ? "text-neutral-400"
                               : "text-slate-500"
@@ -352,7 +414,11 @@ export const AppSidebar: React.FC<AppSidebarProps> = ({
                         <span
                           className={`text-[9px] font-mono px-1.5 py-0.5 rounded-md ${
                             active
-                              ? theme === "dark"
+                              ? activeMode === "real"
+                                ? theme === "dark"
+                                  ? "bg-emerald-500/20 text-emerald-300 font-bold"
+                                  : "bg-emerald-100 text-emerald-800 font-bold"
+                                : theme === "dark"
                                 ? "bg-cyan-500/20 text-cyan-300 font-bold"
                                 : "bg-sky-100 text-sky-800 font-bold"
                               : theme === "dark"
@@ -376,18 +442,28 @@ export const AppSidebar: React.FC<AppSidebarProps> = ({
                   <div>
                     <span
                       className={`text-[10px] font-bold uppercase tracking-wider block ${
-                        theme === "dark" ? "text-neutral-300" : "text-slate-700"
+                        activeMode === "real"
+                          ? "text-emerald-400"
+                          : theme === "dark"
+                          ? "text-neutral-300"
+                          : "text-slate-700"
                       }`}
                     >
-                      Preset Vault · {activeCategory.name}
+                      {activeMode === "real" ? "Real SFX Vault" : "Preset Vault"} · {activeCategory.name}
                     </span>
                     <span className="text-[9px] text-neutral-500 block">
-                      Level 2 & 3 Preset Taxonomy
+                      {activeMode === "real"
+                        ? "Physical Acoustic & Studio Modeling"
+                        : "Level 2 & 3 Preset Taxonomy"}
                     </span>
                   </div>
                   <span
                     className={`text-[10px] font-mono px-2 py-0.5 rounded border ${
-                      theme === "dark"
+                      activeMode === "real"
+                        ? theme === "dark"
+                          ? "text-emerald-400 bg-emerald-950/40 border-emerald-800/40 font-bold"
+                          : "text-emerald-800 bg-emerald-100 border-emerald-300 font-bold"
+                        : theme === "dark"
                         ? "text-cyan-400 bg-cyan-950/40 border-cyan-800/40 font-bold"
                         : "text-sky-700 bg-sky-100 border-sky-300 font-bold"
                     }`}
@@ -499,13 +575,24 @@ export const AppSidebar: React.FC<AppSidebarProps> = ({
                   ) : (
                     filteredPresets.map((p) => {
                       const isSelected = selectedPresetId === p.id;
+                      const hasStudioMatch = realSounds.some(
+                        (s) =>
+                          s.id === p.id ||
+                          s.name.toLowerCase() === p.name.toLowerCase() ||
+                          s.name.toLowerCase().includes(p.name.toLowerCase()) ||
+                          p.name.toLowerCase().includes(s.name.toLowerCase())
+                      );
                       return (
                         <button
                           key={p.id}
                           onClick={() => onSelectPreset(p.id)}
                           className={`w-full text-left p-2 rounded-xl text-xs transition-all cursor-pointer flex flex-col space-y-1 ${
                             isSelected
-                              ? theme === "dark"
+                              ? activeMode === "real"
+                                ? theme === "dark"
+                                  ? "bg-emerald-500/20 border border-emerald-500 text-emerald-200 shadow-xs"
+                                  : "bg-emerald-100 border border-emerald-500 text-emerald-950 font-bold shadow-xs"
+                                : theme === "dark"
                                 ? "bg-cyan-500/15 border border-cyan-500/50 text-cyan-200 shadow-xs"
                                 : "bg-sky-100 border border-sky-400 text-sky-900 font-semibold shadow-xs"
                               : theme === "dark"
@@ -515,9 +602,22 @@ export const AppSidebar: React.FC<AppSidebarProps> = ({
                         >
                           <div className="flex items-center justify-between w-full">
                             <span className="font-semibold truncate">{p.name}</span>
-                            <span className="text-[10px] shrink-0 opacity-80 ml-1">
-                              {p.is_loop ? "🔁 Loop" : "⚡ Shot"}
-                            </span>
+                            <div className="flex items-center space-x-1 shrink-0 ml-1">
+                              {activeMode === "real" && (
+                                <span
+                                  className={`text-[9px] font-mono px-1 py-0.5 rounded border ${
+                                    hasStudioMatch
+                                      ? "bg-amber-500/20 text-amber-300 border-amber-500/40"
+                                      : "bg-emerald-500/20 text-emerald-300 border-emerald-500/40"
+                                  }`}
+                                >
+                                  {hasStudioMatch ? "⭐ Studio" : "🎙️ Real"}
+                                </span>
+                              )}
+                              <span className="text-[10px] opacity-80">
+                                {p.is_loop ? "🔁 Loop" : "⚡ Shot"}
+                              </span>
+                            </div>
                           </div>
                           <div className="flex items-center justify-between text-[9px] opacity-70">
                             <span className="truncate">{p.subcategory || p.category}</span>
@@ -615,7 +715,7 @@ export const AppSidebar: React.FC<AppSidebarProps> = ({
             <div className="flex items-center space-x-2">
               <span className="w-2 h-2 rounded-full bg-emerald-500 animate-pulse" />
               <span className="text-[11px] font-mono font-medium">
-                {libraryMode === "real" ? "Real Audio Active" : "DSP Engine Active"}
+                {activeMode === "real" ? "Real SFX Active" : "DSP Engine Active"}
               </span>
             </div>
           )}

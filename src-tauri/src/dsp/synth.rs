@@ -93,6 +93,8 @@ pub struct SynthParams {
     pub environment: String,
     #[serde(default)]
     pub foot_side: String,
+    #[serde(default)]
+    pub real_sfx_mode: bool,
 }
 
 /// Generates raw stereo audio buffers based on the procedural recipe
@@ -183,6 +185,15 @@ pub fn generate_sound(params: &SynthParams) -> (Vec<f32>, Vec<f32>) {
         peak = peak.max(rv_l.abs()).max(rv_r.abs());
     }
 
+    // Authentic Real SFX Acoustic Studio Stage (Warm tape saturation & micro-reflections)
+    if params.real_sfx_mode {
+        apply_real_sfx_acoustic_stage(&mut left, &mut right, sr);
+        peak = 0.001;
+        for i in 0..total_samples {
+            peak = peak.max(left[i].abs()).max(right[i].abs());
+        }
+    }
+
     // Auto-normalize to 0.95 peak
     if peak > 0.0001 {
         let norm = 0.95 / peak;
@@ -193,6 +204,47 @@ pub fn generate_sound(params: &SynthParams) -> (Vec<f32>, Vec<f32>) {
     }
 
     (left, right)
+}
+
+fn apply_real_sfx_acoustic_stage(left: &mut [f32], right: &mut [f32], sr: f32) {
+    let total = left.len();
+    let d1 = (sr * 0.012).round() as usize;
+    let d2 = (sr * 0.024).round() as usize;
+    let d3 = (sr * 0.038).round() as usize;
+
+    let mut prev_l = 0.0f32;
+    let mut prev_r = 0.0f32;
+    let alpha = (-2.0 * std::f32::consts::PI * 13500.0 / sr).exp();
+
+    for i in 0..total {
+        let mut sl = left[i];
+        let mut sr_val = right[i];
+
+        // Micro-boundary reflections for real foley presence
+        if i >= d1 {
+            sl += left[i - d1] * 0.12;
+            sr_val += right[i - d1] * 0.10;
+        }
+        if i >= d2 {
+            sl += right[i - d2] * 0.08;
+            sr_val += left[i - d2] * 0.08;
+        }
+        if i >= d3 {
+            sl += left[i - d3] * 0.05;
+            sr_val += right[i - d3] * 0.05;
+        }
+
+        // Soft analog tube/tape saturation
+        let sat_l = sl / (1.0 + (sl.abs() * 0.22));
+        let sat_r = sr_val / (1.0 + (sr_val.abs() * 0.22));
+
+        // Air dispersion damping filter
+        prev_l = sat_l * (1.0 - alpha) + prev_l * alpha;
+        prev_r = sat_r * (1.0 - alpha) + prev_r * alpha;
+
+        left[i] = prev_l * 0.88 + sat_l * 0.12;
+        right[i] = prev_r * 0.88 + sat_r * 0.12;
+    }
 }
 
 // -------------------------------------------------------------

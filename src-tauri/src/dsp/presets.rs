@@ -87,6 +87,7 @@ impl PresetDef {
                 character_type: self.character_type.into(),
                 environment: self.environment.into(),
                 foot_side: self.foot_side.into(),
+                real_sfx_mode: false,
             },
         }
     }

@@ -4,6 +4,9 @@ import {
   processRealAudioArrayBuffer,
   ProcessedAudioPayload,
   RealSoundItem,
+  apiSearchCloudSounds,
+  apiDownloadCloudSound,
+  base64ToArrayBuffer,
 } from "../services/audioService";
 import { toast } from "./ui/use-toast";
 
@@ -61,14 +64,11 @@ export const PixabayHubModal: React.FC<PixabayHubModalProps> = ({
     if (!q.trim()) return;
     setIsSearchingCloud(true);
     try {
-      const resp = await fetch(
-        `https://api.lotsofsounds.com/api/v1/sounds/sample?q=${encodeURIComponent(
-          q
-        )}&limit=12`
-      );
-      if (resp.ok) {
-        const json = await resp.json();
-        setCloudResults(json.data || []);
+      const resp = await apiSearchCloudSounds(q, 16);
+      if (resp && resp.data) {
+        setCloudResults(resp.data);
+      } else {
+        setCloudResults([]);
       }
     } catch (e) {
       console.error("Cloud search error:", e);
@@ -85,16 +85,8 @@ export const PixabayHubModal: React.FC<PixabayHubModalProps> = ({
   const handleLoadCloudSound = async (item: CloudSearchResult) => {
     setLoadingSoundId(item.id);
     try {
-      // Fetch stream link
-      const streamApi = `https://api.lotsofsounds.com/api/v1/sounds/sample/${item.id}/stream`;
-      const streamResp = await fetch(streamApi);
-      if (!streamResp.ok) throw new Error("Failed to get stream url");
-      const streamJson = await streamResp.json();
-      const directUrl = streamJson.data.stream_url;
-
-      // Download audio buffer
-      const audioResp = await fetch(directUrl);
-      const arrayBuffer = await audioResp.arrayBuffer();
+      const base64 = await apiDownloadCloudSound(item.id);
+      const arrayBuffer = base64ToArrayBuffer(base64);
       const payload = await processRealAudioArrayBuffer(arrayBuffer);
 
       onLoadRealAudio(payload, item.name);
@@ -108,7 +100,7 @@ export const PixabayHubModal: React.FC<PixabayHubModalProps> = ({
       console.error("Failed to load cloud sound:", err);
       toast({
         title: "Failed to Load Sound",
-        description: "Could not decode audio stream.",
+        description: "Could not download and process this audio track.",
         variant: "destructive",
       });
     } finally {

@@ -30,6 +30,7 @@ export interface SynthParams {
   character_type?: string;
   environment?: string;
   foot_side?: string;
+  real_sfx_mode?: boolean;
 }
 
 export interface LoopSettings {
@@ -299,6 +300,70 @@ export async function apiGetFactoryPresets(): Promise<PresetInfo[]> {
 
 export async function apiExportWav(filePath: string, wavBase64: string): Promise<string> {
   return await invoke<string>("cmd_export_wav_to_file", { filePath, wavBase64 });
+}
+
+export async function apiSearchCloudSounds(
+  query: string,
+  limit: number = 12
+): Promise<{ data: any[] }> {
+  try {
+    const raw = await invoke<string>("cmd_search_cloud_sounds", {
+      query,
+      limit,
+    });
+    return JSON.parse(raw);
+  } catch (err) {
+    console.warn("Tauri cloud search failed, trying fallback:", err);
+    const resp = await fetch(
+      `https://api.lotsofsounds.com/api/v1/sounds/sample?q=${encodeURIComponent(
+        query
+      )}&limit=${limit}`
+    );
+    return await resp.json();
+  }
+}
+
+export async function apiFetchAudioBase64(url: string): Promise<string> {
+  try {
+    return await invoke<string>("cmd_fetch_audio_base64", { url });
+  } catch (err) {
+    console.warn("Tauri audio fetch failed, trying direct fetch:", err);
+    const resp = await fetch(url);
+    const arrayBuffer = await resp.arrayBuffer();
+    const bytes = new Uint8Array(arrayBuffer);
+    let binary = "";
+    const chunkSize = 8192;
+    for (let i = 0; i < bytes.length; i += chunkSize) {
+      binary += String.fromCharCode.apply(
+        null,
+        Array.from(bytes.subarray(i, i + chunkSize))
+      );
+    }
+    return btoa(binary);
+  }
+}
+
+export async function apiDownloadCloudSound(soundId: string): Promise<string> {
+  try {
+    return await invoke<string>("cmd_download_cloud_sound", { soundId });
+  } catch (err) {
+    console.warn("Tauri cmd_download_cloud_sound failed, trying stream API fallback:", err);
+    const streamApi = `https://api.lotsofsounds.com/api/v1/sounds/sample/${soundId}/stream`;
+    const streamResp = await fetch(streamApi);
+    if (!streamResp.ok) throw new Error("Failed to get stream url");
+    const streamJson = await streamResp.json();
+    const directUrl = streamJson.data.stream_url;
+    return await apiFetchAudioBase64(directUrl);
+  }
+}
+
+export function base64ToArrayBuffer(base64: string): ArrayBuffer {
+  const binary = atob(base64);
+  const bytes = new Uint8Array(binary.length);
+  for (let i = 0; i < binary.length; i++) {
+    bytes[i] = binary.charCodeAt(i);
+  }
+  return bytes.buffer;
 }
 
 export function audioBufferToWavBase64(audioBuffer: AudioBuffer): string {
