@@ -110,19 +110,19 @@ pub fn generate_sound(params: &SynthParams) -> (Vec<f32>, Vec<f32>) {
     let mut rng = FastRng::new(params.seed);
 
     match params.category.as_str() {
-        "impact" => generate_impact(&mut left, &mut right, params, &mut rng, sr),
-        "motor" => generate_motor(&mut left, &mut right, params, &mut rng, sr),
-        "ui" => generate_ui(&mut left, &mut right, params, &mut rng, sr),
-        "scifi" => generate_scifi(&mut left, &mut right, params, &mut rng, sr),
-        "footstep" => generate_footstep(&mut left, &mut right, params, &mut rng, sr),
-        "whoosh" => generate_whoosh(&mut left, &mut right, params, &mut rng, sr),
-        "ambient" => generate_ambient(&mut left, &mut right, params, &mut rng, sr),
-        "explosion" => generate_explosion(&mut left, &mut right, params, &mut rng, sr),
-        "weather" => generate_weather(&mut left, &mut right, params, &mut rng, sr),
-        "retro" => generate_retro(&mut left, &mut right, params, &mut rng, sr),
-        "magic" => generate_magic(&mut left, &mut right, params, &mut rng, sr),
-        "weapon" => generate_weapon(&mut left, &mut right, params, &mut rng, sr),
-        "creature" => generate_creature(&mut left, &mut right, params, &mut rng, sr),
+        "impact" | "impacts_hits" => generate_impact(&mut left, &mut right, params, &mut rng, sr),
+        "motor" | "motors_servos" => generate_motor(&mut left, &mut right, params, &mut rng, sr),
+        "ui" | "ui_clicks" => generate_ui(&mut left, &mut right, params, &mut rng, sr),
+        "scifi" | "scifi_energy" => generate_scifi(&mut left, &mut right, params, &mut rng, sr),
+        "footstep" | "foley_steps" => generate_footstep(&mut left, &mut right, params, &mut rng, sr),
+        "whoosh" | "whooshes_swipes" => generate_whoosh(&mut left, &mut right, params, &mut rng, sr),
+        "ambient" | "ambient_drones" => generate_ambient(&mut left, &mut right, params, &mut rng, sr),
+        "explosion" | "explosions_blasts" => generate_explosion(&mut left, &mut right, params, &mut rng, sr),
+        "weather" | "weather_nature" => generate_weather(&mut left, &mut right, params, &mut rng, sr),
+        "retro" | "retro_8bit_nes" => generate_retro(&mut left, &mut right, params, &mut rng, sr),
+        "magic" | "magic_fantasy" => generate_magic(&mut left, &mut right, params, &mut rng, sr),
+        "weapon" | "weapons_guns" => generate_weapon(&mut left, &mut right, params, &mut rng, sr),
+        "creature" | "creatures_roars" => generate_creature(&mut left, &mut right, params, &mut rng, sr),
         _ => generate_impact(&mut left, &mut right, params, &mut rng, sr),
     }
 

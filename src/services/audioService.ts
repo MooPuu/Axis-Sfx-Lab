@@ -57,6 +57,9 @@ export interface PresetInfo {
   id: string;
   name: string;
   category: string;
+  subcategory?: string;
+  tags?: string[];
+  is_loop?: boolean;
   params: SynthParams;
 }
 

@@ -14,6 +14,9 @@ pub struct PresetInfo {
     pub id: String,
     pub name: String,
     pub category: String,
+    pub subcategory: String,
+    pub tags: Vec<String>,
+    pub is_loop: bool,
     pub params: SynthParams,
 }
 
@@ -59,6 +62,9 @@ pub fn cmd_get_factory_presets() -> Vec<PresetInfo> {
             id: p.id.to_string(),
             name: p.name.to_string(),
             category: p.category.to_string(),
+            subcategory: p.subcategory.to_string(),
+            tags: p.tags.iter().map(|s| s.to_string()).collect(),
+            is_loop: p.is_loop,
             params: p.params,
         })
         .collect()

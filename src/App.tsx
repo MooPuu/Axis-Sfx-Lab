@@ -144,9 +144,12 @@ export default function App() {
     apiGetFactoryPresets().then((res) => {
       if (res && res.length > 0) {
         setPresets(res);
+        if (!res.some((p) => p.id === selectedPresetId)) {
+          setSelectedPresetId(res[0].id);
+        }
       }
     });
-  }, []);
+  }, [selectedPresetId]);
 
   // Synthesize audio with progress indicator
   const triggerSynthesis = useCallback(async (currentParams: SynthParams, currentLoop: LoopSettings) => {
@@ -322,9 +325,12 @@ export default function App() {
     const found = presets.find((p) => p.id === presetId);
     if (found) {
       setParams(found.params);
+      if (found.is_loop !== undefined) {
+        setLoopSettings((prev) => ({ ...prev, enabled: Boolean(found.is_loop) }));
+      }
       toast({
         title: "Preset Loaded",
-        description: `Loaded "${found.name}" patch.`,
+        description: `Loaded "${found.name}" (${found.subcategory || found.category}).`,
         variant: "default",
       });
     }
@@ -502,6 +508,10 @@ export default function App() {
                 onChange={setParams}
                 onMutate={handleMutate}
                 onRandomize={handleRandomize}
+                presets={presets}
+                selectedPresetId={selectedPresetId}
+                onSelectPreset={handleSelectPreset}
+                theme={theme}
               />
             </div>
 

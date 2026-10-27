@@ -1,5 +1,5 @@
-import React from "react";
-import { SynthParams } from "../services/audioService";
+import React, { useMemo } from "react";
+import { SynthParams, PresetInfo } from "../services/audioService";
 import {
   IconImpact,
   IconMotor,
@@ -30,6 +30,10 @@ interface ParametricSynthRackProps {
   onChange: (newParams: SynthParams) => void;
   onMutate: () => void;
   onRandomize: () => void;
+  presets?: PresetInfo[];
+  selectedPresetId?: string;
+  onSelectPreset?: (presetId: string) => void;
+  theme?: "dark" | "light";
 }
 
 export const ParametricSynthRack: React.FC<ParametricSynthRackProps> = ({
@@ -37,26 +41,70 @@ export const ParametricSynthRack: React.FC<ParametricSynthRackProps> = ({
   onChange,
   onMutate,
   onRandomize,
+  presets,
+  selectedPresetId,
+  onSelectPreset,
+  theme,
 }) => {
   const updateField = <K extends keyof SynthParams>(key: K, val: SynthParams[K]) => {
     onChange({ ...params, [key]: val });
   };
 
-  const categories = [
-    { id: "impact", name: "Impacts", icon: IconImpact, color: "text-rose-400" },
-    { id: "motor", name: "Motors", icon: IconMotor, color: "text-amber-400" },
-    { id: "ui", name: "UI", icon: IconUI, color: "text-sky-400" },
-    { id: "scifi", name: "Sci-Fi", icon: IconSciFi, color: "text-fuchsia-400" },
-    { id: "footstep", name: "Steps", icon: IconFootstep, color: "text-emerald-400" },
-    { id: "whoosh", name: "Whoosh", icon: IconWhoosh, color: "text-cyan-400" },
-    { id: "ambient", name: "Ambient", icon: IconAmbient, color: "text-violet-400" },
-    { id: "explosion", name: "Explosion", icon: IconExplosion, color: "text-orange-400" },
-    { id: "weather", name: "Weather", icon: IconWeather, color: "text-sky-400" },
-    { id: "retro", name: "Retro", icon: IconRetro, color: "text-lime-400" },
-    { id: "magic", name: "Magic", icon: IconMagic, color: "text-fuchsia-400" },
-    { id: "weapon", name: "Weapon", icon: IconWeapon, color: "text-red-400" },
-    { id: "creature", name: "Creature", icon: IconCreature, color: "text-emerald-400" },
-  ];
+  const categories = useMemo(() => [
+    { id: "impacts_hits", shortId: "impact", name: "Impacts & Hits", icon: IconImpact, color: "text-rose-400" },
+    { id: "motors_servos", shortId: "motor", name: "Motors & Servos", icon: IconMotor, color: "text-amber-400" },
+    { id: "ui_clicks", shortId: "ui", name: "UI & Clicks", icon: IconUI, color: "text-sky-400" },
+    { id: "scifi_energy", shortId: "scifi", name: "Sci-Fi Energy", icon: IconSciFi, color: "text-fuchsia-400" },
+    { id: "foley_steps", shortId: "footstep", name: "Foley Steps", icon: IconFootstep, color: "text-emerald-400" },
+    { id: "whooshes_swipes", shortId: "whoosh", name: "Whooshes & Swipes", icon: IconWhoosh, color: "text-cyan-400" },
+    { id: "ambient_drones", shortId: "ambient", name: "Ambient Drones", icon: IconAmbient, color: "text-violet-400" },
+    { id: "explosions_blasts", shortId: "explosion", name: "Explosions & Blasts", icon: IconExplosion, color: "text-orange-400" },
+    { id: "weather_nature", shortId: "weather", name: "Weather & Nature", icon: IconWeather, color: "text-sky-400" },
+    { id: "retro_8bit_nes", shortId: "retro", name: "Retro 8-Bit NES", icon: IconRetro, color: "text-lime-400" },
+    { id: "magic_fantasy", shortId: "magic", name: "Magic & Fantasy", icon: IconMagic, color: "text-fuchsia-400" },
+    { id: "weapons_guns", shortId: "weapon", name: "Weapons & Guns", icon: IconWeapon, color: "text-red-400" },
+    { id: "creatures_roars", shortId: "creature", name: "Creatures & Roars", icon: IconCreature, color: "text-emerald-400" },
+  ], []);
+
+  // Active engine matching
+  const currentEngine = useMemo(() => {
+    return (
+      categories.find(
+        (c) => c.id === params.category || c.shortId === params.category
+      ) || categories[0]
+    );
+  }, [categories, params.category]);
+
+  // Presets in current engine
+  const currentEnginePresets = useMemo(() => {
+    if (!presets) return [];
+    return presets.filter(
+      (p) =>
+        p.category === currentEngine.id || p.category === currentEngine.shortId
+    );
+  }, [presets, currentEngine]);
+
+  // Active preset
+  const activePreset = useMemo(() => {
+    return presets?.find((p) => p.id === selectedPresetId);
+  }, [presets, selectedPresetId]);
+
+  // Subcategories in current engine
+  const currentEngineSubcategories = useMemo(() => {
+    const subs = new Set<string>();
+    currentEnginePresets.forEach((p) => {
+      if (p.subcategory) subs.add(p.subcategory);
+    });
+    return Array.from(subs);
+  }, [currentEnginePresets]);
+
+  const activeSubcategory = activePreset?.subcategory || currentEngineSubcategories[0] || "";
+
+  // Presets within active subcategory
+  const presetsInActiveSubcategory = useMemo(() => {
+    if (!activeSubcategory) return currentEnginePresets;
+    return currentEnginePresets.filter((p) => p.subcategory === activeSubcategory);
+  }, [currentEnginePresets, activeSubcategory]);
 
     const materials = [
     { id: "metal", name: "Metal Resonance" },
@@ -169,12 +217,25 @@ export const ParametricSynthRack: React.FC<ParametricSynthRackProps> = ({
   ];
 
   return (
-    <div className="flex flex-col bg-neutral-900/90 rounded-2xl border border-neutral-800 p-3.5 sm:p-5 shadow-xl backdrop-blur-md space-y-4 min-w-0 w-full">
+    <div
+      className={`flex flex-col rounded-2xl border p-3.5 sm:p-5 shadow-xl backdrop-blur-md space-y-4 min-w-0 w-full ${
+        theme === "light"
+          ? "bg-slate-50/95 border-slate-200 text-slate-900"
+          : "bg-neutral-900/90 border-neutral-800 text-neutral-200"
+      }`}
+    >
       {/* Category Navigation & Select Header */}
       <div className="min-w-0 space-y-2.5">
         <div className="flex flex-wrap items-center justify-between gap-2 min-w-0">
-          <div className="flex items-center space-x-2 text-xs font-semibold text-neutral-300 shrink-0">
-            <IconSliders size={18} className="text-blue-400" />
+          <div
+            className={`flex items-center space-x-2 text-xs font-semibold shrink-0 ${
+              theme === "light" ? "text-slate-800" : "text-neutral-300"
+            }`}
+          >
+            <IconSliders
+              size={18}
+              className={theme === "light" ? "text-sky-600" : "text-blue-400"}
+            />
             <span>Procedural Sound Generator (13 Engines)</span>
           </div>
 
@@ -185,7 +246,13 @@ export const ParametricSynthRack: React.FC<ParametricSynthRackProps> = ({
                 value={params.category}
                 onValueChange={(val) => updateField("category", val)}
               >
-                <SelectTrigger className="h-7 text-xs bg-neutral-950 border-neutral-800">
+                <SelectTrigger
+                  className={`h-7 text-xs ${
+                    theme === "light"
+                      ? "bg-white border-slate-300 text-slate-900 shadow-xs"
+                      : "bg-neutral-950 border-neutral-800"
+                  }`}
+                >
                   <SelectValue placeholder="Category" />
                 </SelectTrigger>
                 <SelectContent>
@@ -201,7 +268,11 @@ export const ParametricSynthRack: React.FC<ParametricSynthRackProps> = ({
             <button
               onClick={onMutate}
               title="Slightly mutate current sound (5% seed drift)"
-              className="flex items-center space-x-1 px-2 py-1 rounded-lg text-[11px] font-medium bg-amber-500/10 text-amber-300 hover:bg-amber-500/20 border border-amber-500/30 transition-all cursor-pointer shrink-0"
+              className={`flex items-center space-x-1 px-2 py-1 rounded-lg text-[11px] font-medium transition-all cursor-pointer shrink-0 ${
+                theme === "light"
+                  ? "bg-amber-100 text-amber-900 hover:bg-amber-200 border border-amber-300"
+                  : "bg-amber-500/10 text-amber-300 hover:bg-amber-500/20 border border-amber-500/30"
+              }`}
             >
               <IconSparkles size={13} />
               <span>Mutate</span>
@@ -209,7 +280,11 @@ export const ParametricSynthRack: React.FC<ParametricSynthRackProps> = ({
             <button
               onClick={onRandomize}
               title="Completely randomize parameters for instant inspiration"
-              className="flex items-center space-x-1 px-2 py-1 rounded-lg text-[11px] font-medium bg-purple-500/10 text-purple-300 hover:bg-purple-500/20 border border-purple-500/30 transition-all cursor-pointer shrink-0"
+              className={`flex items-center space-x-1 px-2 py-1 rounded-lg text-[11px] font-medium transition-all cursor-pointer shrink-0 ${
+                theme === "light"
+                  ? "bg-purple-100 text-purple-900 hover:bg-purple-200 border border-purple-300"
+                  : "bg-purple-500/10 text-purple-300 hover:bg-purple-500/20 border border-purple-500/30"
+              }`}
             >
               <span>Random</span>
             </button>
@@ -217,26 +292,168 @@ export const ParametricSynthRack: React.FC<ParametricSynthRackProps> = ({
         </div>
 
         {/* Category Selector Tabs */}
-        <div className="grid grid-cols-3 sm:grid-cols-4 md:grid-cols-5 xl:grid-cols-7 2xl:grid-cols-13 gap-1.5 p-1 rounded-xl bg-neutral-950/80 border border-neutral-800/80 min-w-0">
+        <div
+          className={`grid grid-cols-3 sm:grid-cols-4 md:grid-cols-5 xl:grid-cols-7 2xl:grid-cols-13 gap-1.5 p-1 rounded-xl border min-w-0 ${
+            theme === "light"
+              ? "bg-slate-200/60 border-slate-300/80"
+              : "bg-neutral-950/80 border-neutral-800/80"
+          }`}
+        >
           {categories.map((c) => {
             const Icon = c.icon;
-            const active = params.category === c.id;
+            const active =
+              params.category === c.id || params.category === c.shortId;
             return (
               <button
                 key={c.id}
                 onClick={() => updateField("category", c.id)}
                 className={`flex flex-col items-center justify-center py-1.5 sm:py-2 px-1 rounded-lg transition-all cursor-pointer min-w-0 ${
                   active
-                    ? "bg-neutral-800 text-white shadow-md border border-neutral-700"
+                    ? theme === "light"
+                      ? "bg-white text-slate-900 shadow-sm border border-slate-300 font-semibold"
+                      : "bg-neutral-800 text-white shadow-md border border-neutral-700"
+                    : theme === "light"
+                    ? "text-slate-600 hover:text-slate-900 hover:bg-slate-300/70"
                     : "text-neutral-400 hover:text-neutral-200 hover:bg-neutral-900/60"
                 }`}
               >
-                <Icon size={16} className={active ? c.color : "text-neutral-500"} />
-                <span className="text-[10px] font-medium mt-1 truncate max-w-full">{c.name}</span>
+                <Icon
+                  size={16}
+                  className={
+                    active
+                      ? c.color
+                      : theme === "light"
+                      ? "text-slate-500"
+                      : "text-neutral-500"
+                  }
+                />
+                <span className="text-[10px] font-medium mt-1 truncate max-w-full">
+                  {c.name}
+                </span>
               </button>
             );
           })}
         </div>
+
+        {/* Level 1 -> Level 2 -> Level 3 Breadcrumb Header */}
+        <div
+          className={`flex flex-wrap items-center justify-between gap-2 p-2 sm:p-2.5 rounded-xl border text-xs ${
+            theme === "light"
+              ? "bg-white border-slate-200 shadow-xs"
+              : "bg-neutral-950/70 border-neutral-800"
+          }`}
+        >
+          <div className="flex items-center space-x-1.5 flex-wrap">
+            <span
+              className={`font-mono text-[9px] uppercase px-1.5 py-0.5 rounded font-semibold border ${
+                theme === "light"
+                  ? "bg-blue-100 text-blue-900 border-blue-300"
+                  : "bg-blue-500/15 text-blue-300 border-blue-500/30"
+              }`}
+            >
+              L1: {currentEngine.name}
+            </span>
+            <span className="text-neutral-500 text-[10px]">›</span>
+            <span
+              className={`font-mono text-[9px] uppercase px-1.5 py-0.5 rounded font-semibold border ${
+                theme === "light"
+                  ? "bg-emerald-100 text-emerald-900 border-emerald-300"
+                  : "bg-emerald-500/15 text-emerald-300 border-emerald-500/30"
+              }`}
+            >
+              L2: {activeSubcategory || "General"}
+            </span>
+            <span className="text-neutral-500 text-[10px]">›</span>
+            <span
+              className={`font-mono text-[9px] px-1.5 py-0.5 rounded font-semibold border ${
+                theme === "light"
+                  ? "bg-fuchsia-100 text-fuchsia-900 border-fuchsia-300"
+                  : "bg-fuchsia-500/15 text-fuchsia-300 border-fuchsia-500/30"
+              }`}
+            >
+              L3: {activePreset?.name || "Active Sound"}
+            </span>
+            {activePreset?.is_loop !== undefined && (
+              <span
+                className={`font-mono text-[9px] px-1.5 py-0.5 rounded border ${
+                  theme === "light"
+                    ? "bg-amber-100 text-amber-900 border-amber-300 font-medium"
+                    : "bg-amber-500/15 text-amber-300 border-amber-500/30"
+                }`}
+              >
+                {activePreset.is_loop ? "🔁 Seamless Loop" : "⚡ One-Shot Event"}
+              </span>
+            )}
+          </div>
+
+          {/* Quick Preset Selector for Active Subcategory */}
+          {presetsInActiveSubcategory.length > 0 && onSelectPreset && (
+            <div className="flex items-center space-x-1.5">
+              <span
+                className={`text-[10px] font-mono ${
+                  theme === "light" ? "text-slate-600" : "text-neutral-400"
+                }`}
+              >
+                Select Preset:
+              </span>
+              <select
+                value={selectedPresetId}
+                onChange={(e) => onSelectPreset(e.target.value)}
+                className={`text-[11px] rounded px-2 py-0.5 focus:outline-none cursor-pointer border ${
+                  theme === "light"
+                    ? "bg-white border-slate-300 text-slate-900 font-medium focus:border-sky-500 shadow-xs"
+                    : "bg-neutral-900 border-neutral-700 text-neutral-200 focus:border-cyan-500"
+                }`}
+              >
+                {presetsInActiveSubcategory.map((p) => (
+                  <option key={p.id} value={p.id}>
+                    {p.name} {p.is_loop ? "(Loop)" : ""}
+                  </option>
+                ))}
+              </select>
+            </div>
+          )}
+        </div>
+
+        {/* Subcategory Navigation Pills */}
+        {currentEngineSubcategories.length > 0 && (
+          <div className="flex items-center space-x-1.5 overflow-x-auto pb-1 text-xs">
+            <span
+              className={`text-[10px] font-mono uppercase shrink-0 ${
+                theme === "light" ? "text-slate-600 font-semibold" : "text-neutral-500"
+              }`}
+            >
+              Subcategories:
+            </span>
+            {currentEngineSubcategories.map((sub) => {
+              const isSelected = activeSubcategory === sub;
+              return (
+                <button
+                  key={sub}
+                  onClick={() => {
+                    const firstPreset = currentEnginePresets.find(
+                      (p) => p.subcategory === sub
+                    );
+                    if (firstPreset && onSelectPreset) {
+                      onSelectPreset(firstPreset.id);
+                    }
+                  }}
+                  className={`px-2.5 py-1 rounded-lg text-[10px] font-medium transition-all shrink-0 cursor-pointer ${
+                    isSelected
+                      ? theme === "light"
+                        ? "bg-sky-600 text-white font-bold shadow-xs"
+                        : "bg-cyan-500/20 text-cyan-300 border border-cyan-500/50 font-semibold shadow-xs"
+                      : theme === "light"
+                      ? "bg-slate-200/80 text-slate-700 hover:text-slate-900 hover:bg-slate-300"
+                      : "bg-neutral-950/60 text-neutral-400 hover:text-neutral-200 border border-neutral-800/80 hover:bg-neutral-800"
+                  }`}
+                >
+                  {sub}
+                </button>
+              );
+            })}
+          </div>
+        )}
       </div>
 
       {/* Main Parameters Grid */}
