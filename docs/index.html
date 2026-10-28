@@ -1,0 +1,702 @@
+<!DOCTYPE html>
+<html lang="en" data-theme="dark">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Axis SFX Lab — Next-Gen Native Procedural SFX & Foley Audio Suite</title>
+  <meta name="description" content="Next-Gen Native Procedural Synthesizer, Real SFX & Foley Audio Suite for Game Developers & Sound Designers. Built with Rust + Tauri v2 + React.">
+  <meta name="keywords" content="SFX, Sound Generator, Sound Effects, Foley, Synthesizer, Procedural Audio, Game Development, Sound Design, Audio Suite, Axis Tools, Rust, Tauri">
+  <meta property="og:title" content="Axis SFX Lab">
+  <meta property="og:description" content="Next-Gen Native Procedural SFX & Foley Audio Suite for Game Developers & Sound Designers.">
+  <meta property="og:image" content="assets/Axis Tools 2.png">
+  <meta property="og:type" content="website">
+  <link rel="icon" type="image/png" href="assets/logo.png">
+  <link rel="stylesheet" href="style.css">
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700;800&family=JetBrains+Mono:wght@400;500;600&display=swap" rel="stylesheet">
+</head>
+<body>
+
+  <!-- Ambient Glow Effects -->
+  <div class="glow-sphere glow-1"></div>
+  <div class="glow-sphere glow-2"></div>
+
+  <!-- Header Navigation -->
+  <header class="navbar">
+    <div class="nav-container">
+      <a href="#" class="brand-link">
+        <img src="assets/logo-equalizer.png" alt="Axis SFX Lab Logo" class="brand-icon">
+        <span class="brand-name">Axis SFX Lab</span>
+      </a>
+
+      <nav class="nav-menu">
+        <a href="#features">Features</a>
+        <a href="#soundboard">Soundboard</a>
+        <a href="#screenshots">Screenshots</a>
+        <a href="#architecture">Architecture</a>
+        <a href="#comparison">Comparison</a>
+        <a href="#downloads">Downloads</a>
+      </nav>
+
+      <div class="nav-actions">
+        <a href="https://github.com/MooPuu/axis-sfx-lab" target="_blank" rel="noopener" class="btn btn-secondary btn-nav-icon" title="View Source on GitHub">
+          <svg width="20" height="20" viewBox="0 0 24 24" fill="currentColor"><path d="M12 0C5.37 0 0 5.37 0 12c0 5.31 3.435 9.795 8.205 11.385.6.105.825-.255.825-.57 0-.285-.015-1.23-.015-2.235-3.015.555-3.795-.735-4.035-1.41-.135-.345-.72-1.41-1.23-1.695-.42-.225-1.02-.78-.015-.795.945-.015 1.62.87 1.845 1.23 1.08 1.815 2.805 1.305 3.495.99.105-.78.42-1.305.765-1.605-2.67-.3-5.46-1.335-5.46-5.925 0-1.305.465-2.385 1.23-3.225-.12-.3-.54-1.53.12-3.18 0 0 1.005-.315 3.3 1.23.96-.27 1.98-.405 3-.405s2.04.135 3 .405c2.295-1.56 3.3-1.23 3.3-1.23.66 1.65.24 2.88.12 3.18.765.84 1.23 1.905 1.23 3.225 0 4.605-2.805 5.625-5.475 5.925.435.375.81 1.095.81 2.22 0 1.605-.015 2.895-.015 3.3 0 .315.225.69.825.57A12.02 12.02 0 0024 12c0-6.63-5.37-12-12-12z"/></svg>
+          <span>GitHub</span>
+        </a>
+        <a href="#downloads" class="btn btn-primary">
+          <span>Get v1.0.0</span>
+          <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M7 10l5 5 5-5M12 15V3"/><path d="M21 15v4a2 2 0 01-2 2H5a2 2 0 01-2-2v-4"/></svg>
+        </a>
+      </div>
+    </div>
+  </header>
+
+  <!-- Hero Section -->
+  <section class="hero-section">
+    <div class="container hero-container">
+      <div class="hero-badge">
+        <span class="badge-dot"></span>
+        <span>Version 1.0.0 Available Now</span>
+        <span class="badge-pill">Native Rust DSP</span>
+      </div>
+
+      <h1 class="hero-title">
+        The Next-Gen Native <br>
+        <span class="text-gradient">Procedural SFX & Foley</span> Audio Suite
+      </h1>
+
+      <p class="hero-subtitle">
+        Generate instant, game-ready sound effects and seamless audio loops for games and digital media. Powered by 13 specialized procedural synthesizer engines, 838 physical acoustic presets, real foley modeling, and native cloud search. Engineered in Rust for blazingly fast native performance under 20 MB.
+      </p>
+
+      <div class="hero-cta-group">
+        <a href="#downloads" class="btn btn-primary btn-lg">
+          <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M7 10l5 5 5-5M12 15V3"/><path d="M21 15v4a2 2 0 01-2 2H5a2 2 0 01-2-2v-4"/></svg>
+          <span>Download v1.0.0</span>
+          <span class="btn-subtext">Windows • Portable & Installer</span>
+        </a>
+        <a href="#soundboard" class="btn btn-secondary btn-lg">
+          <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polygon points="5 3 19 12 5 21 5 3"/></svg>
+          <span>Hear Live Audio Demo</span>
+        </a>
+      </div>
+
+      <!-- Hero App Preview Mockup -->
+      <div class="hero-preview-frame">
+        <div class="window-header">
+          <div class="window-dots">
+            <span class="dot red"></span>
+            <span class="dot yellow"></span>
+            <span class="dot green"></span>
+          </div>
+          <div class="window-title">Axis SFX Lab — v1.0.0</div>
+          <div class="window-badge">Native Rust DSP Core</div>
+        </div>
+        <div class="window-body">
+          <img src="screenshots/workstation-main.png" alt="Axis SFX Lab Workstation" class="hero-mockup-img" id="heroImage">
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- Interactive Soundboard Audition Section -->
+  <section class="soundboard-section" id="soundboard">
+    <div class="container">
+      <div class="section-header">
+        <div class="section-tag">Instant Audio Audition</div>
+        <h2 class="section-title">Hear It In Action</h2>
+        <p class="section-subtitle">
+          Click any sound pad below to preview audio samples synthesized directly with Axis SFX Lab's physical modal and foley engines.
+        </p>
+      </div>
+
+      <div class="soundboard-grid">
+        <!-- Pad 1: Whoosh -->
+        <button class="sound-pad-btn" data-sound="assets/sounds/whoosh_cinematic.mp3">
+          <div class="sound-pad-icon">🌪️</div>
+          <div class="sound-pad-info">
+            <span class="sound-pad-name">Cinematic Whoosh</span>
+            <span class="sound-pad-tag">Whooshes & Swipes</span>
+          </div>
+          <div class="sound-eq-bars">
+            <span class="sound-eq-bar"></span>
+            <span class="sound-eq-bar"></span>
+            <span class="sound-eq-bar"></span>
+          </div>
+        </button>
+
+        <!-- Pad 2: Concrete Step -->
+        <button class="sound-pad-btn" data-sound="assets/sounds/footstep_concrete.mp3">
+          <div class="sound-pad-icon">👞</div>
+          <div class="sound-pad-info">
+            <span class="sound-pad-name">Boots on Concrete</span>
+            <span class="sound-pad-tag">Foley Steps</span>
+          </div>
+          <div class="sound-eq-bars">
+            <span class="sound-eq-bar"></span>
+            <span class="sound-eq-bar"></span>
+            <span class="sound-eq-bar"></span>
+          </div>
+        </button>
+
+        <!-- Pad 3: Impact Hit -->
+        <button class="sound-pad-btn" data-sound="assets/sounds/impact_hit.mp3">
+          <div class="sound-pad-icon">💥</div>
+          <div class="sound-pad-info">
+            <span class="sound-pad-name">Heavy Metal Impact</span>
+            <span class="sound-pad-tag">Impacts & Hits</span>
+          </div>
+          <div class="sound-eq-bars">
+            <span class="sound-eq-bar"></span>
+            <span class="sound-eq-bar"></span>
+            <span class="sound-eq-bar"></span>
+          </div>
+        </button>
+
+        <!-- Pad 4: Laser Weapon -->
+        <button class="sound-pad-btn" data-sound="assets/sounds/weapon_laser.mp3">
+          <div class="sound-pad-icon">🔫</div>
+          <div class="sound-pad-info">
+            <span class="sound-pad-name">Sci-Fi Plasma Rifle</span>
+            <span class="sound-pad-tag">Weapons & Guns</span>
+          </div>
+          <div class="sound-eq-bars">
+            <span class="sound-eq-bar"></span>
+            <span class="sound-eq-bar"></span>
+            <span class="sound-eq-bar"></span>
+          </div>
+        </button>
+
+        <!-- Pad 5: Retro Synth -->
+        <button class="sound-pad-btn" data-sound="assets/sounds/retro_synth.mp3">
+          <div class="sound-pad-icon">👾</div>
+          <div class="sound-pad-info">
+            <span class="sound-pad-name">8-Bit NES Arpeggio</span>
+            <span class="sound-pad-tag">Retro 8-Bit NES</span>
+          </div>
+          <div class="sound-eq-bars">
+            <span class="sound-eq-bar"></span>
+            <span class="sound-eq-bar"></span>
+            <span class="sound-eq-bar"></span>
+          </div>
+        </button>
+
+        <!-- Pad 6: Cannon Explosion -->
+        <button class="sound-pad-btn" data-sound="assets/sounds/explosion_cannon.mp3">
+          <div class="sound-pad-icon">💣</div>
+          <div class="sound-pad-info">
+            <span class="sound-pad-name">Sub-Bass Blast</span>
+            <span class="sound-pad-tag">Explosions & Blasts</span>
+          </div>
+          <div class="sound-eq-bars">
+            <span class="sound-eq-bar"></span>
+            <span class="sound-eq-bar"></span>
+            <span class="sound-eq-bar"></span>
+          </div>
+        </button>
+
+        <!-- Pad 7: UI Click -->
+        <button class="sound-pad-btn" data-sound="assets/sounds/ui_click.mp3">
+          <div class="sound-pad-icon">🖱️</div>
+          <div class="sound-pad-info">
+            <span class="sound-pad-name">Haptic Interface Click</span>
+            <span class="sound-pad-tag">UI & Clicks</span>
+          </div>
+          <div class="sound-eq-bars">
+            <span class="sound-eq-bar"></span>
+            <span class="sound-eq-bar"></span>
+            <span class="sound-eq-bar"></span>
+          </div>
+        </button>
+      </div>
+    </div>
+  </section>
+
+  <!-- Stats Grid -->
+  <section class="stats-section">
+    <div class="container">
+      <div class="stats-grid">
+        <div class="stat-card">
+          <div class="stat-value text-gradient">13</div>
+          <div class="stat-label">Synthesizer Engines</div>
+          <div class="stat-desc">Specialized physical modal & DSP architectures</div>
+        </div>
+        <div class="stat-card">
+          <div class="stat-value text-gradient">838</div>
+          <div class="stat-label">Physical Presets</div>
+          <div class="stat-desc">Crafted across 78 distinct sound taxonomies</div>
+        </div>
+        <div class="stat-card">
+          <div class="stat-value text-gradient">&lt; 20 MB</div>
+          <div class="stat-label">Ultra-Lightweight</div>
+          <div class="stat-desc">Native Rust standalone binary with zero runtime bloat</div>
+        </div>
+        <div class="stat-card">
+          <div class="stat-value text-gradient">100%</div>
+          <div class="stat-label">Royalty-Free</div>
+          <div class="stat-desc">Unrestricted use for commercial games & media</div>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- Features Section -->
+  <section class="features-section" id="features">
+    <div class="container">
+      <div class="section-header">
+        <div class="section-tag">Core Capabilities</div>
+        <h2 class="section-title">Engineered For Modern Sound Design</h2>
+        <p class="section-subtitle">
+          Everything game developers, sound designers, and indie creators need to build professional audio assets in seconds.
+        </p>
+      </div>
+
+      <div class="features-grid">
+        <!-- Feature 1 -->
+        <div class="feature-card">
+          <div class="feature-icon">🎛️</div>
+          <h3 class="feature-title">13 Synthesizer Engines</h3>
+          <p class="feature-desc">
+            Physical modal synthesis, harmonic FM, granular noise shaping, non-linear dispersion, and sub-bass resonators customized for physical impacts, motors, UI, sci-fi energy, foley steps, whooshes, ambient drones, explosions, weather, retro 8-bit, magic, weapons, and creatures.
+          </p>
+        </div>
+
+        <!-- Feature 2 -->
+        <div class="feature-card">
+          <div class="feature-icon">🎙️</div>
+          <h3 class="feature-title">Real SFX & Studio Acoustics</h3>
+          <p class="feature-desc">
+            Toggle Real SFX mode to simulate authentic microphone room boundary reflections, gentle analog tape saturation, and acoustic air absorption that replicate recordings from high-end foley microphones (Sennheiser MKH 416 & Neumann U87).
+          </p>
+        </div>
+
+        <!-- Feature 3 -->
+        <div class="feature-card">
+          <div class="feature-icon">🔁</div>
+          <h3 class="feature-title">Seamless Loop Seam Editor</h3>
+          <p class="feature-desc">
+            Snap markers to mathematically calculated zero-crossings, audition loop transition junctions (last 1s into first 1s) with one click, and enable tail folding for seamless continuous loops in game engines.
+          </p>
+        </div>
+
+        <!-- Feature 4 -->
+        <div class="feature-card">
+          <div class="feature-icon">🌐</div>
+          <h3 class="feature-title">Pixabay Cloud Hub</h3>
+          <p class="feature-desc">
+            Search, stream, and import thousands of authentic royalty-free sound effects directly from Pixabay and LotsofSounds. Powered by native Rust HTTP streaming that operates completely free of browser CORS limitations.
+          </p>
+        </div>
+
+        <!-- Feature 5 -->
+        <div class="feature-card">
+          <div class="feature-icon">🎲</div>
+          <h3 class="feature-title">Organic Micro-Seed Mutation</h3>
+          <p class="feature-desc">
+            Hit <strong>[M]</strong> to apply subtle 5% organic seed drift to resonance frequencies and envelope dynamics, generating natural variations for footsteps and hits without changing the sound character.
+          </p>
+        </div>
+
+        <!-- Feature 6 -->
+        <div class="feature-card">
+          <div class="feature-icon">📦</div>
+          <h3 class="feature-title">Batch Variation Bank</h3>
+          <p class="feature-desc">
+            Generate 4 to 20 randomized acoustic variations in a single click. Audition and export entire variation banks packed with consistent naming conventions ready for game engine randomizers.
+          </p>
+        </div>
+
+        <!-- Feature 7 -->
+        <div class="feature-card">
+          <div class="feature-icon">🎮</div>
+          <h3 class="feature-title">Game Engine Export Hub</h3>
+          <p class="feature-desc">
+            One-click presets tailored specifically for Godot Engine, Unity, and Unreal Engine 5. Customize sample rate (44.1kHz, 48kHz, 96kHz), bit depth (16-bit, 24-bit, 32-bit float), channels (Stereo/Mono), and file formats (WAV, OGG, MP3, FLAC).
+          </p>
+        </div>
+
+        <!-- Feature 8 -->
+        <div class="feature-card">
+          <div class="feature-icon">🌓</div>
+          <h3 class="feature-title">Dual High-Contrast Studio Themes</h3>
+          <p class="feature-desc">
+            Sleek dark mode with glowing emerald accents for night-time studio sessions, plus a high-contrast slate light mode designed for bright workspaces and daytime development.
+          </p>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- Interactive Screenshots Showcase -->
+  <section class="showcase-section" id="screenshots">
+    <div class="container">
+      <div class="section-header">
+        <div class="section-tag">Visual Walkthrough</div>
+        <h2 class="section-title">Designed For Precision & Speed</h2>
+        <p class="section-subtitle">
+          Explore the clean, intuitive workstation designed to eliminate clutter and give you full physical control over your audio design.
+        </p>
+      </div>
+
+      <!-- Tab Buttons -->
+      <div class="showcase-tabs">
+        <button class="showcase-tab active" data-img="screenshots/workstation-main.png" data-desc="Real-time stereo waveform visualizer with playback head, volume fader, and envelope controls.">
+          <span>🎛️ Audio Workstation</span>
+        </button>
+        <button class="showcase-tab" data-img="screenshots/foley-engine.png" data-desc="Deep foley physics: Surface materials, movement style, footwear weight, character biology, and room echo reflections.">
+          <span>👞 Foley Step Physics</span>
+        </button>
+        <button class="showcase-tab" data-img="screenshots/cloud-hub.png" data-desc="Search, audition, and stream thousands of royalty-free cloud sound effects directly into the audio lab.">
+          <span>🌐 Pixabay Cloud Hub</span>
+        </button>
+        <button class="showcase-tab" data-img="screenshots/synthesizer-vault.png" data-desc="Over 838 physical presets across 13 distinct audio generation categories.">
+          <span>📚 Preset Vault Taxonomy</span>
+        </button>
+        <button class="showcase-tab" data-img="screenshots/light-theme.png" data-desc="Sleek, high-contrast light theme engineered for daytime and outdoor game audio production.">
+          <span>☀️ High-Contrast Light Mode</span>
+        </button>
+      </div>
+
+      <!-- Active Image Preview Display -->
+      <div class="showcase-viewer">
+        <div class="viewer-frame">
+          <img src="screenshots/workstation-main.png" alt="Axis SFX Lab Showcase" id="showcaseImage" class="viewer-img">
+          <button class="btn-zoom" id="btnZoom" title="Open Fullscreen Lightbox">
+            <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="11" cy="11" r="8"/><line x1="21" y1="21" x2="16.65" y2="16.65"/><line x1="11" y1="8" x2="11" y2="14"/><line x1="8" y1="11" x2="14" y2="11"/></svg>
+          </button>
+        </div>
+        <p class="viewer-caption" id="showcaseCaption">
+          Real-time stereo waveform visualizer with playback head, volume fader, and envelope controls.
+        </p>
+      </div>
+    </div>
+  </section>
+
+  <!-- Lightbox Modal -->
+  <div class="lightbox-modal" id="lightboxModal">
+    <div class="lightbox-backdrop" id="lightboxBackdrop"></div>
+    <div class="lightbox-content">
+      <button class="lightbox-close" id="lightboxClose" title="Close Lightbox">&times;</button>
+      <img src="screenshots/workstation-main.png" alt="Full Resolution Screenshot" id="lightboxImg">
+    </div>
+  </div>
+
+  <!-- Architecture & Tech Stack Section -->
+  <section class="architecture-section" id="architecture">
+    <div class="container">
+      <div class="section-header">
+        <div class="section-tag">System Architecture</div>
+        <h2 class="section-title">Built On High-Performance Native Rust</h2>
+        <p class="section-subtitle">
+          Engineered from scratch to replace bloated multi-hundred-megabyte software with an ultra-lightweight, native binary that launches in 100 milliseconds.
+        </p>
+      </div>
+
+      <div class="tech-stack-grid">
+        <div class="tech-card">
+          <div class="tech-badge">Backend Core</div>
+          <h3 class="tech-title">Rust + Tauri v2</h3>
+          <p class="tech-desc">
+            Raw native performance with zero Chromium overhead. Fast memory management, custom PRNG audio seed engines, and high-performance native file I/O.
+          </p>
+          <ul class="tech-list">
+            <li>State Variable Filters (SVF) with zero-delay feedback</li>
+            <li>Multi-modal harmonic resonance solver</li>
+            <li>Freeverb stereo diffusion matrix</li>
+            <li>Native ureq HTTP proxy with zero-CORS cloud streaming</li>
+          </ul>
+        </div>
+
+        <div class="tech-card">
+          <div class="tech-badge">DSP & Synthesis</div>
+          <h3 class="tech-title">Procedural Physics Engine</h3>
+          <p class="tech-desc">
+            Mathematical acoustic modeling simulating material stiffness, damping decay, non-linear dispersion, and soft analog tube saturation.
+          </p>
+          <ul class="tech-list">
+            <li>Dynamic sample rate support (44.1kHz to 96kHz)</li>
+            <li>Zero-crossing loop boundary alignment</li>
+            <li>Seamless tail fold blending</li>
+            <li>32-bit floating point internal DSP pipeline</li>
+          </ul>
+        </div>
+
+        <div class="tech-card">
+          <div class="tech-badge">User Experience</div>
+          <h3 class="tech-title">React 18 + Web Audio</h3>
+          <p class="tech-desc">
+            Modern, fluid user interface with immediate real-time visual feedback and seamless desktop window integration.
+          </p>
+          <ul class="tech-list">
+            <li>Interactive canvas waveform renderer</li>
+            <li>Real-time scrubbing & audition junction player</li>
+            <li>Custom Duotone SVG icon system</li>
+            <li>Instant dark/light theme switching</li>
+          </ul>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- Comparison Table Section -->
+  <section class="comparison-section" id="comparison">
+    <div class="container">
+      <div class="section-header">
+        <div class="section-tag">Direct Comparison</div>
+        <h2 class="section-title">Why Axis SFX Lab?</h2>
+        <p class="section-subtitle">
+          See how Axis SFX Lab compares against traditional DAWs, static online sound libraries, and browser web synthesizers.
+        </p>
+      </div>
+
+      <div class="comparison-table-wrapper">
+        <table class="comparison-table">
+          <thead>
+            <tr>
+              <th>Feature</th>
+              <th class="highlight">Axis SFX Lab</th>
+              <th>Traditional DAWs</th>
+              <th>Online Sound Libraries</th>
+              <th>Web Synthesizers</th>
+            </tr>
+          </thead>
+          <tbody>
+            <tr>
+              <td><strong>Application Size</strong></td>
+              <td class="highlight"><strong>&lt; 20 MB (Portable)</strong></td>
+              <td>1 GB – 20 GB</td>
+              <td>Browser only</td>
+              <td>Browser only</td>
+            </tr>
+            <tr>
+              <td><strong>Procedural Synthesis</strong></td>
+              <td class="highlight"><strong>13 Dedicated Engines</strong></td>
+              <td>Complex plugin chains needed</td>
+              <td>Static audio files only</td>
+              <td>Basic 8-bit only</td>
+            </tr>
+            <tr>
+              <td><strong>Physical Acoustic Presets</strong></td>
+              <td class="highlight"><strong>838 Factory Presets</strong></td>
+              <td>Manual synth programming</td>
+              <td>Requires search/download</td>
+              <td>Limited presets</td>
+            </tr>
+            <tr>
+              <td><strong>Seamless Loop Editor</strong></td>
+              <td class="highlight"><strong>Zero-Crossing & Seam Audition</strong></td>
+              <td>Manual cutting & crossfading</td>
+              <td>Rarely looped</td>
+              <td>Basic looping</td>
+            </tr>
+            <tr>
+              <td><strong>Cloud Sound Search</strong></td>
+              <td class="highlight"><strong>Direct Pixabay Streaming</strong></td>
+              <td>None (External download)</td>
+              <td>Manual web download</td>
+              <td>None</td>
+            </tr>
+            <tr>
+              <td><strong>Batch Variation Bank</strong></td>
+              <td class="highlight"><strong>1-Click Multi-Variations</strong></td>
+              <td>Manual bounce</td>
+              <td>Manual download</td>
+              <td>None</td>
+            </tr>
+            <tr>
+              <td><strong>Cost & Licensing</strong></td>
+              <td class="highlight"><strong>100% Free & Open Source (MIT)</strong></td>
+              <td>$200 – $600+</td>
+              <td>Subscription / Per-sound</td>
+              <td>Free with limitations</td>
+            </tr>
+          </tbody>
+        </table>
+      </div>
+    </div>
+  </section>
+
+  <!-- Downloads Section -->
+  <section class="downloads-section" id="downloads">
+    <div class="container">
+      <div class="section-header">
+        <div class="section-tag">Get Started</div>
+        <h2 class="section-title">Download Axis SFX Lab</h2>
+        <p class="section-subtitle">
+          Available now as a zero-installation standalone portable binary or automated installer for Windows 10 & 11.
+        </p>
+      </div>
+
+      <!-- Platform Selection Tabs -->
+      <div class="platform-tabs" role="tablist">
+        <button class="platform-tab active" data-platform="windows" role="tab" aria-selected="true">
+          <svg width="20" height="20" viewBox="0 0 24 24" fill="currentColor"><path d="M0 3.449L9.75 2.1v9.451H0m10.949-9.602L24 0v11.4H10.949M0 12.6h9.75v9.451L0 20.699M10.949 12.6H24V24l-12.9-1.801"/></svg>
+          <span>Windows</span>
+        </button>
+        <button class="platform-tab" data-platform="macos" role="tab" aria-selected="false">
+          <svg width="20" height="20" viewBox="0 0 24 24" fill="currentColor"><path d="M18.71 19.5c-.83 1.24-1.71 2.45-3.05 2.47-1.34.03-1.77-.79-3.29-.79-1.53 0-2 .77-3.27.82-1.31.05-2.3-1.32-3.14-2.53C4.25 17 2.94 12.45 4.7 9.39c.87-1.52 2.43-2.48 4.12-2.51 1.28-.02 2.5.87 3.29.87.78 0 2.26-1.07 3.81-.91.65.03 2.47.26 3.64 1.98-.09.06-2.17 1.28-2.15 3.81.03 3.02 2.65 4.03 2.68 4.04-.03.07-.42 1.44-1.38 2.83M15.97 6.37c.61-.75 1.04-1.8 1.01-2.87-.96.04-2.11.64-2.79 1.43-.59.68-1.12 1.76-1.03 2.81 1.07.08 2.2-.62 2.81-1.37z"/></svg>
+          <span>macOS</span>
+        </button>
+        <button class="platform-tab" data-platform="linux" role="tab" aria-selected="false">
+          <svg width="20" height="20" viewBox="0 0 24 24" fill="currentColor"><path d="M12.001 0a12 12 0 100 24 12 12 0 000-24zm0 2.182a9.818 9.818 0 110 19.636 9.818 9.818 0 010-19.636z"/></svg>
+          <span>Linux</span>
+        </button>
+      </div>
+
+      <!-- Windows Downloads Panel -->
+      <div class="platform-panel active" id="panel-windows">
+        <div class="downloads-grid-three">
+          <!-- Card 1: Standalone Portable -->
+          <div class="download-card highlight-card">
+            <div class="card-badge">Recommended</div>
+            <div class="card-icon">⚡</div>
+            <h3 class="card-title">Standalone Portable</h3>
+            <p class="card-desc">Zero installation required. Download, double-click, and start designing sound effects immediately.</p>
+            <div class="card-meta">
+              <span>Windows 10 / 11 (64-bit)</span>
+              <span>~20 MB</span>
+            </div>
+            <a href="https://github.com/MooPuu/axis-sfx-lab/releases/download/v1.0.0/Axis.SFX.Lab_1.0.0_Portable.exe" class="btn btn-primary btn-block">
+              <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M7 10l5 5 5-5M12 15V3"/><path d="M21 15v4a2 2 0 01-2 2H5a2 2 0 01-2-2v-4"/></svg>
+              <span>Download Portable (.exe)</span>
+            </a>
+          </div>
+
+          <!-- Card 2: Standard Installer -->
+          <div class="download-card">
+            <div class="card-icon">💿</div>
+            <h3 class="card-title">Standard Installer (NSIS)</h3>
+            <p class="card-desc">Full installer wizard with desktop shortcut, Start Menu entry, and clean Windows uninstaller.</p>
+            <div class="card-meta">
+              <span>Windows 10 / 11 (64-bit)</span>
+              <span>~16.5 MB</span>
+            </div>
+            <a href="https://github.com/MooPuu/axis-sfx-lab/releases/download/v1.0.0/Axis.SFX.Lab_1.0.0_NSIS_Setup.exe" class="btn btn-secondary btn-block">
+              <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M7 10l5 5 5-5M12 15V3"/><path d="M21 15v4a2 2 0 01-2 2H5a2 2 0 01-2-2v-4"/></svg>
+              <span>Download Setup (.exe)</span>
+            </a>
+          </div>
+
+          <!-- Card 3: Enterprise Installer -->
+          <div class="download-card">
+            <div class="card-icon">🏢</div>
+            <h3 class="card-title">Enterprise Package (MSI)</h3>
+            <p class="card-desc">Windows Installer package ideal for system administrators, IT deployment, and enterprise silent installs.</p>
+            <div class="card-meta">
+              <span>Windows 10 / 11 (64-bit)</span>
+              <span>~17.5 MB</span>
+            </div>
+            <a href="https://github.com/MooPuu/axis-sfx-lab/releases/download/v1.0.0/Axis.SFX.Lab_1.0.0_Installer.msi" class="btn btn-secondary btn-block">
+              <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M7 10l5 5 5-5M12 15V3"/><path d="M21 15v4a2 2 0 01-2 2H5a2 2 0 01-2-2v-4"/></svg>
+              <span>Download MSI Installer</span>
+            </a>
+          </div>
+        </div>
+      </div>
+
+      <!-- macOS Downloads Panel -->
+      <div class="platform-panel" id="panel-macos">
+        <div class="download-card platform-note-card">
+          <div class="card-icon">🍎</div>
+          <h3 class="card-title">macOS Universal Build</h3>
+          <p class="card-desc">
+            macOS release packages for Apple Silicon (M1-M4) & Intel Macs can be compiled directly from source using Tauri v2.
+          </p>
+          <div class="code-box">
+            <code>git clone https://github.com/MooPuu/axis-sfx-lab.git<br>cd axis-sfx-lab<br>npm install && npm run build<br>npx tauri build</code>
+          </div>
+          <a href="https://github.com/MooPuu/axis-sfx-lab" target="_blank" rel="noopener" class="btn btn-secondary">
+            <span>View Source on GitHub</span>
+          </a>
+        </div>
+      </div>
+
+      <!-- Linux Downloads Panel -->
+      <div class="platform-panel" id="panel-linux">
+        <div class="download-card platform-note-card">
+          <div class="card-icon">🐧</div>
+          <h3 class="card-title">Linux Build</h3>
+          <p class="card-desc">
+            Build native AppImage, `.deb`, or standalone tarball for Ubuntu, Debian, Arch, and Fedora using the Rust + Tauri toolchain.
+          </p>
+          <div class="code-box">
+            <code>git clone https://github.com/MooPuu/axis-sfx-lab.git<br>cd axis-sfx-lab<br>npm install && npm run build<br>cargo build --release --manifest-path src-tauri/Cargo.toml</code>
+          </div>
+          <a href="https://github.com/MooPuu/axis-sfx-lab" target="_blank" rel="noopener" class="btn btn-secondary">
+            <span>View Linux Build Instructions</span>
+          </a>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- FAQ Section -->
+  <section class="faq-section">
+    <div class="container">
+      <div class="section-header">
+        <div class="section-tag">Frequently Asked Questions</div>
+        <h2 class="section-title">Everything You Need To Know</h2>
+      </div>
+
+      <div class="faq-grid">
+        <div class="faq-card">
+          <h4 class="faq-question">Are generated sound effects royalty-free?</h4>
+          <p class="faq-answer">
+            Yes! All sound effects procedurally synthesized inside Axis SFX Lab are 100% royalty-free. You are free to use them in commercial games, films, YouTube videos, and interactive apps without attribution.
+          </p>
+        </div>
+
+        <div class="faq-card">
+          <h4 class="faq-question">How does Real SFX mode work?</h4>
+          <p class="faq-answer">
+            Real SFX mode passes raw procedural synthesizers through an organic physical acoustic stage with multi-tap room boundary micro-reflections, warm non-linear tube/tape saturation, and air absorption filtering that closely mirrors studio foley microphones.
+          </p>
+        </div>
+
+        <div class="faq-card">
+          <h4 class="faq-question">Can I import my own recorded sound files?</h4>
+          <p class="faq-answer">
+            Yes. Simply drag and drop any WAV, MP3, OGG, or FLAC file into the workstation. Axis SFX Lab will instantly analyze its waveform, compute peaks, and generate zero-crossing loop markers.
+          </p>
+        </div>
+
+        <div class="faq-card">
+          <h4 class="faq-question">Which game engines are directly supported?</h4>
+          <p class="faq-answer">
+            The Game Export Hub includes tailored profiles for Godot Engine, Unity, and Unreal Engine 5 with automatic channel, bit-depth, and sample-rate formatting.
+          </p>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- Footer -->
+  <footer class="footer">
+    <div class="container footer-container">
+      <div class="footer-brand">
+        <picture>
+          <source media="(prefers-color-scheme: dark)" srcset="assets/Axis%20Tools%20Dark.png">
+          <source media="(prefers-color-scheme: light)" srcset="assets/Axis%20Tools%202.png">
+          <img src="assets/Axis%20Tools%202.png" alt="Axis Tools Logo" class="footer-logo">
+        </picture>
+        <p class="footer-tagline">
+          Part of the <strong>Axis Tools</strong> open-source game development ecosystem.
+        </p>
+        <p class="footer-copy">
+          Created & Developed by <strong>Mahdi Kareem (MooPuu)</strong>. Copyright &copy; 2026. All rights reserved.
+        </p>
+      </div>
+
+      <div class="footer-links">
+        <a href="https://github.com/MooPuu/axis-sfx-lab" target="_blank" rel="noopener">GitHub Repository</a>
+        <a href="https://github.com/MooPuu/axis-texture-lab" target="_blank" rel="noopener">Axis Texture Lab</a>
+        <a href="https://github.com/MooPuu" target="_blank" rel="noopener">Axis Tools Ecosystem</a>
+        <a href="LICENSE" target="_blank" rel="noopener">MIT License</a>
+      </div>
+    </div>
+  </footer>
+
+  <script src="script.js"></script>
+</body>
+</html>
