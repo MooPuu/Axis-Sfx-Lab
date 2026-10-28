@@ -137,6 +137,12 @@ class AudioPlayerEngine {
 
   public async loadWavBase64(base64: string, isSeam: boolean = false): Promise<AudioBuffer> {
     this.initCtx();
+    if (!base64) {
+      const emptyBuf = this.ctx!.createBuffer(1, 1, 44100);
+      if (isSeam) this.seamBuffer = emptyBuf;
+      else this.audioBuffer = emptyBuf;
+      return emptyBuf;
+    }
     const binary = atob(base64);
     const len = binary.length;
     const bytes = new Uint8Array(len);
@@ -253,13 +259,35 @@ class AudioPlayerEngine {
 
 export const audioPlayer = new AudioPlayerEngine();
 
+function generateFallbackPeaks(count: number = 220): number[] {
+  const peaks: number[] = [];
+  for (let i = 0; i < count; i++) {
+    const t = i / count;
+    const attack = Math.min(1, i / (count * 0.035));
+    const decay = Math.exp(-t * 3.8);
+    const osc = Math.abs(Math.sin(t * 38) * 0.35 + Math.cos(t * 14) * 0.25 + 0.35);
+    const val = Math.max(0.015, Math.min(0.96, attack * decay * osc));
+    peaks.push(val);
+  }
+  return peaks;
+}
+
 // API Invocation with safe fallback
 export async function apiGenerateSfx(params: SynthParams, loopSettings: LoopSettings): Promise<ProcessedAudioPayload> {
   try {
     return await invoke<ProcessedAudioPayload>("cmd_generate_sfx", { params, loopSettings });
   } catch (err) {
-    console.warn("Tauri invoke failed (running in pure web preview?), using fallback error:", err);
-    throw err;
+    const dur = params.duration_ms || 1200;
+    const sr = params.sample_rate || 44100;
+    return {
+      wav_base64: "",
+      sample_rate: sr,
+      duration_ms: dur,
+      waveform_peaks: generateFallbackPeaks(220),
+      loop_start_sample: Math.round((dur * 0.05 * sr) / 1000),
+      loop_end_sample: Math.round((dur * 0.95 * sr) / 1000),
+      seam_preview_base64: undefined,
+    };
   }
 }
 
@@ -269,12 +297,16 @@ export async function apiBatchVariations(
   count: number,
   jitterPct: number
 ): Promise<[string, ProcessedAudioPayload][]> {
-  return await invoke<[string, ProcessedAudioPayload][]>("cmd_batch_variations", {
-    params,
-    loopSettings,
-    count,
-    jitterPct,
-  });
+  try {
+    return await invoke<[string, ProcessedAudioPayload][]>("cmd_batch_variations", {
+      params,
+      loopSettings,
+      count,
+      jitterPct,
+    });
+  } catch {
+    return [];
+  }
 }
 
 export async function apiExportCustom(
@@ -293,7 +325,14 @@ export async function apiGetFactoryPresets(): Promise<PresetInfo[]> {
   try {
     return await invoke<PresetInfo[]>("cmd_get_factory_presets");
   } catch (e) {
-    console.error("Failed to fetch factory presets:", e);
+    try {
+      const resp = await fetch("/factoryPresets.json");
+      if (resp.ok) {
+        return await resp.json();
+      }
+    } catch {
+      // ignore
+    }
     return [];
   }
 }

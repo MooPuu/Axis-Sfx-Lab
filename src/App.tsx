@@ -76,7 +76,13 @@ const DEFAULT_LOOP: LoopSettings = {
 };
 
 export default function App() {
-  const [params, setParams] = useState<SynthParams>(DEFAULT_PARAMS);
+  const urlParams = typeof window !== "undefined" ? new URLSearchParams(window.location.search) : null;
+  const initialCategory = urlParams?.get("category") || DEFAULT_PARAMS.category;
+
+  const [params, setParams] = useState<SynthParams>(() => ({
+    ...DEFAULT_PARAMS,
+    category: initialCategory,
+  }));
   const [loopSettings, setLoopSettings] = useState<LoopSettings>(DEFAULT_LOOP);
   const [audioPayload, setAudioPayload] = useState<ProcessedAudioPayload | null>(null);
   const [presets, setPresets] = useState<PresetInfo[]>([]);
@@ -84,7 +90,7 @@ export default function App() {
   const [libraryMode, setLibraryMode] = useState<"dsp" | "real">("dsp");
 
   // Real Studio & Pixabay audio state
-  const [isPixabayHubOpen, setIsPixabayHubOpen] = useState<boolean>(false);
+  const [isPixabayHubOpen, setIsPixabayHubOpen] = useState<boolean>(() => urlParams?.get("modal") === "pixabay");
   const [realSounds, setRealSounds] = useState<RealSoundItem[]>([]);
   const [selectedRealSoundId, setSelectedRealSoundId] = useState<string>("");
   const [isRealAudioLoaded, setIsRealAudioLoaded] = useState<boolean>(false);
@@ -92,6 +98,8 @@ export default function App() {
 
   // UI Theme state ("dark" | "light")
   const [theme, setTheme] = useState<"dark" | "light">(() => {
+    if (urlParams?.get("theme") === "light") return "light";
+    if (urlParams?.get("theme") === "dark") return "dark";
     return (localStorage.getItem("axis_sfx_theme") as "dark" | "light") || "dark";
   });
 
@@ -178,7 +186,9 @@ export default function App() {
       setTaskProgress(60);
       const payload = await apiGenerateSfx(currentParams, currentLoop);
       setAudioPayload(payload);
-      await audioPlayer.loadWavBase64(payload.wav_base64, false);
+      if (payload.wav_base64) {
+        await audioPlayer.loadWavBase64(payload.wav_base64, false);
+      }
       if (payload.seam_preview_base64) {
         await audioPlayer.loadWavBase64(payload.seam_preview_base64, true);
       }

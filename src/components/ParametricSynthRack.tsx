@@ -538,7 +538,7 @@ export const ParametricSynthRack: React.FC<ParametricSynthRackProps> = ({
           )}
 
           {/* Footstep Foley Combinatorial Sound Designer Matrix */}
-          {params.category === "footstep" && (
+          {(params.category === "footstep" || params.category === "foley_steps") && (
             <div className="space-y-4 pt-1 min-w-0">
               {/* Dynamic Sound Recipe & Stride Bar */}
               <div className="p-3 rounded-xl bg-gradient-to-r from-emerald-950/70 via-neutral-900 to-teal-950/70 border border-emerald-800/60 shadow-md space-y-2">
