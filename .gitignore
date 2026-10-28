@@ -25,3 +25,5 @@ dist-ssr
 
 # Release bundles
 dist-releases/
+release-assets/
+release-notes.md
