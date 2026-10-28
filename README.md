@@ -102,14 +102,18 @@ Pre-compiled release packages for **Windows** (10 & 11, 64-bit) are available on
 | **Standard Installer (NSIS)** | Desktop & Start Menu shortcuts, clean uninstaller. | [**AxisSFXLab-v1.0.0-setup.exe**](https://github.com/MooPuu/axis-sfx-lab/releases/download/v1.0.0/AxisSFXLab-v1.0.0-setup.exe) | ~16.5 MB |
 | **Enterprise Installer (MSI)** | Windows Installer package for managed deployment. | [**AxisSFXLab-v1.0.0-x64.msi**](https://github.com/MooPuu/axis-sfx-lab/releases/download/v1.0.0/AxisSFXLab-v1.0.0-x64.msi) | ~17.5 MB |
 
-### 🍎 macOS & 🐧 Linux
-Build natively using the cross-platform Tauri toolchain:
-```bash
-git clone https://github.com/MooPuu/axis-sfx-lab.git
-cd axis-sfx-lab
-npm install && npm run build
-npx tauri build
-```
+### 🍎 macOS (Apple Silicon & Intel)
+| Package | Description | Download | Size |
+|---|---|---|---|
+| **Universal DMG Package** | Drag-and-drop installer for Apple Silicon (M1-M4) & Intel Macs. | [**AxisSFXLab-v1.0.0-macos-universal.dmg**](https://github.com/MooPuu/axis-sfx-lab/releases/download/v1.0.0/AxisSFXLab-v1.0.0-macos-universal.dmg) | Universal DMG |
+| **App Bundle Tarball** | Compressed `.app` application archive. | [**AxisSFXLab-v1.0.0-macos-universal.app.tar.gz**](https://github.com/MooPuu/axis-sfx-lab/releases/download/v1.0.0/AxisSFXLab-v1.0.0-macos-universal.app.tar.gz) | Compressed App |
+
+### 🐧 Linux (x86_64)
+| Package | Description | Download | Size |
+|---|---|---|---|
+| **Universal AppImage** | Portable executable. Runs on all major Linux distributions. | [**AxisSFXLab-v1.0.0-linux-x86_64.AppImage**](https://github.com/MooPuu/axis-sfx-lab/releases/download/v1.0.0/AxisSFXLab-v1.0.0-linux-x86_64.AppImage) | Universal AppImage |
+| **Debian / Ubuntu Package** | Native `.deb` package installer. | [**AxisSFXLab-v1.0.0-linux-amd64.deb**](https://github.com/MooPuu/axis-sfx-lab/releases/download/v1.0.0/AxisSFXLab-v1.0.0-linux-amd64.deb) | Debian Package |
+| **Binary Tarball** | Standalone Linux executable bundle. | [**AxisSFXLab-v1.0.0-linux-x86_64.tar.gz**](https://github.com/MooPuu/axis-sfx-lab/releases/download/v1.0.0/AxisSFXLab-v1.0.0-linux-x86_64.tar.gz) | Standalone Binary |
 
 > **System Requirements:** Windows 10/11 with WebView2 • macOS 11.0+ • 64-bit Linux with WebKit2GTK 4.1.
 
