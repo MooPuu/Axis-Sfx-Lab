@@ -11,7 +11,42 @@
   <meta property="og:image" content="assets/Axis Tools 2.png">
   <meta property="og:type" content="website">
   <link rel="icon" type="image/png" href="assets/logo.png">
-  <link rel="stylesheet" href="style.css">
+  <link rel="stylesheet" href="style.css?v=1.0.2">
+  <style>
+    /* Inlined dark footer styling ensuring immediate visibility bypassing any CSS cache */
+    footer.footer, .footer {
+      background-color: #080a0f !important;
+      background: #080a0f !important;
+      border-top: 1px solid rgba(255, 255, 255, 0.08) !important;
+      color: #94a3b8 !important;
+      padding: 56px 0 40px !important;
+    }
+    .footer-brand-logo {
+      height: 48px !important;
+      max-width: 100% !important;
+      object-fit: contain !important;
+      margin-bottom: 12px !important;
+      filter: drop-shadow(0 2px 8px rgba(0, 0, 0, 0.7)) !important;
+    }
+    .footer-tagline {
+      color: #94a3b8 !important;
+    }
+    .footer-tagline strong {
+      color: #f8fafc !important;
+    }
+    .footer-copy {
+      color: #64748b !important;
+    }
+    .footer-copy strong {
+      color: #cbd5e1 !important;
+    }
+    .footer-links a {
+      color: #cbd5e1 !important;
+    }
+    .footer-links a:hover {
+      color: #10b981 !important;
+    }
+  </style>
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
   <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700;800&family=JetBrains+Mono:wght@400;500;600&display=swap" rel="stylesheet">
@@ -740,23 +775,23 @@
   </section>
 
   <!-- Footer -->
-  <footer class="footer">
+  <footer class="footer" style="background-color: #080a0f !important; background: #080a0f !important; border-top: 1px solid rgba(255, 255, 255, 0.08) !important; color: #94a3b8 !important; padding: 56px 0 40px !important;">
     <div class="container footer-container">
       <div class="footer-brand">
-        <img src="assets/Axis%20Tools%20Dark.png" alt="Axis Tools Logo" class="footer-brand-logo" style="height: 48px; max-width: 100%; object-fit: contain; margin-bottom: 14px;">
-        <p class="footer-tagline">
-          Part of the <strong>Axis Tools</strong> open-source game development ecosystem.
+        <img src="assets/Axis%20Tools%20Dark.png" alt="Axis Tools Logo" class="footer-brand-logo" style="height: 48px; max-width: 100%; object-fit: contain; margin-bottom: 14px; filter: drop-shadow(0 2px 8px rgba(0, 0, 0, 0.7));">
+        <p class="footer-tagline" style="color: #94a3b8 !important;">
+          Part of the <strong style="color: #f8fafc !important;">Axis Tools</strong> open-source game development ecosystem.
         </p>
-        <p class="footer-copy">
-          Created & Developed by <strong>Mahdi Kareem (MooPuu)</strong>. Copyright &copy; 2026. All rights reserved.
+        <p class="footer-copy" style="color: #64748b !important;">
+          Created & Developed by <strong style="color: #cbd5e1 !important;">Mahdi Kareem (MooPuu)</strong>. Copyright &copy; 2026. All rights reserved.
         </p>
       </div>
 
       <div class="footer-links">
-        <a href="https://github.com/MooPuu/axis-sfx-lab" target="_blank" rel="noopener">GitHub Repository</a>
-        <a href="https://github.com/MooPuu/axis-texture-lab" target="_blank" rel="noopener">Axis Texture Lab</a>
-        <a href="https://github.com/MooPuu" target="_blank" rel="noopener">Axis Tools Ecosystem</a>
-        <a href="LICENSE" target="_blank" rel="noopener">MIT License</a>
+        <a href="https://github.com/MooPuu/axis-sfx-lab" target="_blank" rel="noopener" style="color: #cbd5e1 !important;">GitHub Repository</a>
+        <a href="https://github.com/MooPuu/axis-texture-lab" target="_blank" rel="noopener" style="color: #cbd5e1 !important;">Axis Texture Lab</a>
+        <a href="https://github.com/MooPuu" target="_blank" rel="noopener" style="color: #cbd5e1 !important;">Axis Tools Ecosystem</a>
+        <a href="LICENSE" target="_blank" rel="noopener" style="color: #cbd5e1 !important;">MIT License</a>
       </div>
     </div>
   </footer>

@@ -837,9 +837,10 @@ body {
 /* Footer */
 .footer {
   padding: 56px 0 40px;
-  border-top: 1px solid rgba(255, 255, 255, 0.08);
-  background: #080a0f;
-  color: #94a3b8;
+  border-top: 1px solid rgba(255, 255, 255, 0.08) !important;
+  background-color: #080a0f !important;
+  background: #080a0f !important;
+  color: #94a3b8 !important;
   position: relative;
   overflow: hidden;
 }
