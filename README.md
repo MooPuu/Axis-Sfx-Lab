@@ -97,9 +97,10 @@ Pre-compiled release packages for **Windows** (10 & 11, 64-bit) are available on
 ### 🪟 Windows (10 & 11, 64-bit)
 | Package | Description | Download | Size |
 |---|---|---|---|
-| **Standalone Portable** | Zero installation required. Run directly. | [**Axis SFX Lab_1.0.0_Portable.exe**](https://github.com/MooPuu/axis-sfx-lab/releases/download/v1.0.0/Axis.SFX.Lab_1.0.0_Portable.exe) | ~20.5 MB |
-| **Standard Installer (NSIS)** | Desktop & Start Menu shortcuts, clean uninstaller. | [**Axis SFX Lab_1.0.0_NSIS_Setup.exe**](https://github.com/MooPuu/axis-sfx-lab/releases/download/v1.0.0/Axis.SFX.Lab_1.0.0_NSIS_Setup.exe) | ~16.5 MB |
-| **Enterprise Installer (MSI)** | Windows Installer package for managed deployment. | [**Axis SFX Lab_1.0.0_Installer.msi**](https://github.com/MooPuu/axis-sfx-lab/releases/download/v1.0.0/Axis.SFX.Lab_1.0.0_Installer.msi) | ~17.5 MB |
+| **Standalone Portable** | Zero installation required. Run directly. | [**AxisSFXLab-v1.0.0-windows-x64.exe**](https://github.com/MooPuu/axis-sfx-lab/releases/download/v1.0.0/AxisSFXLab-v1.0.0-windows-x64.exe) | ~20.5 MB |
+| **Portable Zip Package** | Includes executable, icon, and quick-start docs. | [**AxisSFXLab-v1.0.0-windows-portable.zip**](https://github.com/MooPuu/axis-sfx-lab/releases/download/v1.0.0/AxisSFXLab-v1.0.0-windows-portable.zip) | ~16.9 MB |
+| **Standard Installer (NSIS)** | Desktop & Start Menu shortcuts, clean uninstaller. | [**AxisSFXLab-v1.0.0-setup.exe**](https://github.com/MooPuu/axis-sfx-lab/releases/download/v1.0.0/AxisSFXLab-v1.0.0-setup.exe) | ~16.5 MB |
+| **Enterprise Installer (MSI)** | Windows Installer package for managed deployment. | [**AxisSFXLab-v1.0.0-x64.msi**](https://github.com/MooPuu/axis-sfx-lab/releases/download/v1.0.0/AxisSFXLab-v1.0.0-x64.msi) | ~17.5 MB |
 
 ### 🍎 macOS & 🐧 Linux
 Build natively using the cross-platform Tauri toolchain:
