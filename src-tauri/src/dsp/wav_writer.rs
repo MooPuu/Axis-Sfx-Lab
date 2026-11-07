@@ -49,17 +49,21 @@ pub fn write_custom_wav(
     cursor.write_all(&data_chunk_size.to_le_bytes()).map_err(|e| e.to_string())?;
 
     // Write samples based on bit depth
-    for i in 0..num_samples {
-        let left_sample = if is_mono && samples_right.is_some() {
-            (samples_left[i] + samples_right.unwrap()[i]) * 0.5
+    for (i, &left) in samples_left.iter().enumerate().take(num_samples) {
+        let right_val = samples_right.and_then(|r| r.get(i).copied());
+        let left_sample = if is_mono {
+            if let Some(rv) = right_val {
+                (left + rv) * 0.5
+            } else {
+                left
+            }
         } else {
-            samples_left[i]
+            left
         };
 
         write_single_sample(&mut cursor, left_sample, bit_depth)?;
 
-        if effective_channels == 2 && samples_right.is_some() {
-            let right_sample = samples_right.unwrap()[i];
+        if effective_channels == 2 && let Some(right_sample) = right_val {
             write_single_sample(&mut cursor, right_sample, bit_depth)?;
         }
     }

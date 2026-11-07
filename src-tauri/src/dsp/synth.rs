@@ -42,7 +42,7 @@ impl FastRng {
         let white = self.next_bipolar();
         self.b0 = 0.99886 * self.b0 + white * 0.0555179;
         self.b1 = 0.99332 * self.b1 + white * 0.0750759;
-        self.b2 = 0.96900 * self.b2 + white * 0.1538520;
+        self.b2 = 0.96900 * self.b2 + white * 0.153_852;
         (self.b0 + self.b1 + self.b2 + white * 0.5362) * 0.18
     }
 
@@ -129,10 +129,7 @@ pub fn generate_sound(params: &SynthParams) -> (Vec<f32>, Vec<f32>) {
     }
 
         // Apply Echo / Environmental reflections (Hallway, Stairwell, Warehouse, Cave, Cathedral, etc.)
-    let has_env_echo = params.echo || match params.environment.as_str() {
-        "hallway" | "stairwell" | "warehouse" | "cave" | "cathedral" => true,
-        _ => false,
-    };
+    let has_env_echo = params.echo || matches!(params.environment.as_str(), "hallway" | "stairwell" | "warehouse" | "cave" | "cathedral");
     if has_env_echo {
         let (delay_ms, feedback, mix, lpf) = match params.environment.as_str() {
             "cave" => (250.0, 0.55, 0.58, 2400.0),
@@ -491,7 +488,7 @@ fn generate_scifi(
         let mut sig = carrier * amp_env;
 
         // Glitch stutter: repeat grains
-        if is_glitch && i > grain_size * 2 && (i / grain_size) % 3 == 0 {
+        if is_glitch && i > grain_size * 2 && (i / grain_size).is_multiple_of(3) {
             let grain_offset = i % grain_size;
             let glitch_pulse = (grain_offset as f32 / grain_size as f32 * 2.0 * PI).sin();
             sig = sig * 0.4 + glitch_pulse * 0.6;
